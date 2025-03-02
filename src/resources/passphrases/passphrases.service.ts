@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CryptoService } from 'src/utilities/Crypto';
 import { PrismaService } from 'src/utilities/Prisma';
 import Reporter from 'src/utilities/Reporter';
@@ -22,18 +22,22 @@ export class PassphrasesService {
   public async getPassphraseEntryById(id: string) {
     return this.prisma.passphrase.findUniqueOrThrow({
       where: { id },
+      include: { history: true },
     });
   }
 
   public async createPassphraseEntry(body: RequestCreatePassphrase) {
+    const hashedPassphrase = await this.crypto.hash(body.passphrase);
+    const strength = Strength.evaluate(body.passphrase).score;
+
     return this.prisma.passphrase.create({
       data: {
-        passphrase: body.passphrase,
+        passphrase: hashedPassphrase,
         platform: body.platform,
         note: body.note,
         icon: body.icon,
         history: {
-          create: { strength: Strength.evaluate(body.passphrase).score },
+          create: { strength },
         },
       },
     });
@@ -46,7 +50,11 @@ export class PassphrasesService {
     if (!body.passphrase) {
       return this.prisma.passphrase.update({
         where: { id },
-        data: body,
+        data: {
+          platform: body.platform,
+          note: body.note,
+          icon: body.icon,
+        },
       });
     }
 
@@ -54,20 +62,27 @@ export class PassphrasesService {
     if (!shouldUpdate) {
       return this.prisma.passphrase.update({
         where: { id },
-        data: body,
+        data: {
+          platform: body.platform,
+          note: body.note,
+          icon: body.icon,
+        },
       });
     }
 
-    const { passphrase, history } = await this.preparePassphraseUpdate(
-      body.passphrase,
-    );
+    const hashedPassphrase = await this.crypto.hash(body.passphrase);
+    const strength = Strength.evaluate(body.passphrase).score;
 
     return this.prisma.passphrase.update({
       where: { id },
       data: {
-        ...body,
-        passphrase,
-        history,
+        passphrase: hashedPassphrase,
+        platform: body.platform,
+        note: body.note,
+        icon: body.icon,
+        history: {
+          create: { strength },
+        },
       },
     });
   }
@@ -106,20 +121,15 @@ export class PassphrasesService {
       select: { passphrase: true },
     });
 
-    return existingPassphrase?.passphrase !== newPassphrase;
-  }
+    if (!existingPassphrase) {
+      throw new NotFoundException('Passphrase not found');
+    }
 
-  private async preparePassphraseUpdate(passphrase: string) {
-    const strength = Strength.evaluate(passphrase).score;
-    const hashedPassphrase = await this.crypto.hash(passphrase);
+    const isSame = await this.crypto.compare(
+      newPassphrase,
+      existingPassphrase.passphrase,
+    );
 
-    return {
-      passphrase: hashedPassphrase,
-      history: {
-        create: {
-          strength,
-        },
-      },
-    };
+    return !isSame;
   }
 }
