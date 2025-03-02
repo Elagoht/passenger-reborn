@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./passenger.bus"
+}
+
+model User {
+  id String @id @default(uuid())
+
+  password    String
+  recoveryKey String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Passphrase {
+  id String @id @default(uuid())
+
+  passphrase String
+  platform   String
+  note       String?
+  icon       String?
+
+  history PassphraseHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PassphraseHistory {
+  id String @id @default(uuid())
+
+  strength Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  passphraseId String
+  passphrase   Passphrase @relation(fields: [passphraseId], references: [id])
+}
