@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { compare, hash } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
+import { CryptoService } from 'src/utilities/Crypto';
 import Environment from 'src/utilities/Environment';
 import { PrismaService } from 'src/utilities/Prisma';
 import { RequestChangePassphrase } from './schemas/requests/change';
@@ -11,7 +11,10 @@ import ResponseToken from './schemas/responses/token';
 
 @Injectable()
 export class AuthService {
-  public constructor(private readonly prisma: PrismaService) {}
+  public constructor(
+    private readonly prisma: PrismaService,
+    private readonly crypto: CryptoService,
+  ) {}
 
   public async initialize(body: RequestInitialize): Promise<ResponseToken> {
     const user = await this.prisma.user.findFirst();
@@ -22,8 +25,8 @@ export class AuthService {
 
     await this.prisma.user.create({
       data: {
-        password: await this.hashPassword(body.passphrase),
-        recoveryKey: await this.hashPassword(body.recoveryKey),
+        password: await this.crypto.hash(body.passphrase),
+        recoveryKey: await this.crypto.hash(body.recoveryKey),
       },
     });
 
@@ -37,7 +40,7 @@ export class AuthService {
       throw new BadRequestException('Application has not been setup yet');
     }
 
-    if (!(await this.comparePassword(body.passphrase, user.password))) {
+    if (!(await this.crypto.compare(body.passphrase, user.password))) {
       throw new BadRequestException('Invalid passphrase');
     }
 
@@ -51,7 +54,7 @@ export class AuthService {
       throw new BadRequestException('Application has not been setup yet');
     }
 
-    if (!(await this.comparePassword(body.recoveryKey, user.recoveryKey))) {
+    if (!(await this.crypto.compare(body.recoveryKey, user.recoveryKey))) {
       throw new BadRequestException('Invalid recovery key');
     }
 
@@ -62,7 +65,7 @@ export class AuthService {
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
-        password: await this.hashPassword(newRandomPassphrase),
+        password: await this.crypto.hash(newRandomPassphrase),
       },
     });
 
@@ -79,17 +82,9 @@ export class AuthService {
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
-        password: await this.hashPassword(body.passphrase),
+        password: await this.crypto.hash(body.passphrase),
       },
     });
-  }
-
-  private async hashPassword(password: string) {
-    return await hash(password, 10);
-  }
-
-  private async comparePassword(password: string, hashedPassword: string) {
-    return await compare(password, hashedPassword);
   }
 
   /**

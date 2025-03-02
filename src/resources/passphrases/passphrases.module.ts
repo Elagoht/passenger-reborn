@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
-import { PassphraseController } from './passphrases.controller';
-import { PassphraseService } from './passphrases.service';
+import { CryptoService } from 'src/utilities/Crypto';
+import { PassphrasesController } from './passphrases.controller';
+import { PassphrasesService } from './passphrases.service';
 
 @Module({
-  controllers: [PassphraseController],
-  providers: [PassphraseService],
+  controllers: [PassphrasesController],
+  providers: [PassphrasesService, CryptoService],
 })
-export class PassphraseModule {}
+export class PassphrasesModule {}
