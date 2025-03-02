@@ -1,16 +1,19 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { User } from '@prisma/client';
 import { compare, hash } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
 import Environment from 'src/utilities/Environment';
 import { PrismaService } from 'src/utilities/Prisma';
+import { RequestChangePassphrase } from './schemas/requests/change';
 import RequestInitialize from './schemas/requests/initialize';
+import RequestLogin from './schemas/requests/login';
+import { RequestResetPassphrase } from './schemas/requests/reset';
+import ResponseToken from './schemas/responses/token';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  public constructor(private readonly prisma: PrismaService) {}
 
-  async initialize(body: RequestInitialize) {
+  public async initialize(body: RequestInitialize): Promise<ResponseToken> {
     const user = await this.prisma.user.findFirst();
 
     if (user) {
@@ -23,20 +26,62 @@ export class AuthService {
         recoveryKey: await this.hashPassword(body.recoveryKey),
       },
     });
+
+    return { token: await this.generateToken() };
   }
 
-  async login(password: string) {
+  public async login(body: RequestLogin): Promise<ResponseToken> {
     const user = await this.prisma.user.findFirst();
 
     if (!user) {
       throw new BadRequestException('Application has not been setup yet');
     }
 
-    if (!(await this.comparePassword(password, user.password))) {
+    if (!(await this.comparePassword(body.passphrase, user.password))) {
       throw new BadRequestException('Invalid passphrase');
     }
 
-    return { token: await this.generateToken(user) };
+    return { token: await this.generateToken() };
+  }
+
+  public async resetPassphrase(body: RequestResetPassphrase) {
+    const user = await this.prisma.user.findFirst();
+
+    if (!user) {
+      throw new BadRequestException('Application has not been setup yet');
+    }
+
+    if (!(await this.comparePassword(body.recoveryKey, user.recoveryKey))) {
+      throw new BadRequestException('Invalid recovery key');
+    }
+
+    const newRandomPassphrase =
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: await this.hashPassword(newRandomPassphrase),
+      },
+    });
+
+    return { assignedPassphrase: newRandomPassphrase };
+  }
+
+  public async changePassphrase(body: RequestChangePassphrase) {
+    const user = await this.prisma.user.findFirst();
+
+    if (!user) {
+      throw new BadRequestException('Application has not been setup yet');
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: await this.hashPassword(body.passphrase),
+      },
+    });
   }
 
   private async hashPassword(password: string) {
@@ -47,7 +92,11 @@ export class AuthService {
     return await compare(password, hashedPassword);
   }
 
-  private async generateToken(user: User) {
+  /**
+   * This is a single user application,
+   * so we can sign an empty payload
+   */
+  private async generateToken() {
     return sign({}, Environment.JWT_SECRET, {
       expiresIn: '1h',
     });
