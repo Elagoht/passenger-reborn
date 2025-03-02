@@ -16,7 +16,7 @@ import RequestUpdatePassphrase from './schemas/requests/update';
 
 @UseGuards(JwtGuard)
 @ApiBearerAuth()
-@Controller('passphrase')
+@Controller('passphrases')
 export class PassphraseController {
   constructor(private readonly passphraseService: PassphraseService) {}
 
