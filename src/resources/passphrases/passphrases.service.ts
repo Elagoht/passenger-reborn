@@ -7,7 +7,7 @@ import RequestCreatePassphrase from './schemas/requests/create';
 import RequestUpdatePassphrase from './schemas/requests/update';
 
 @Injectable()
-export class PassphraseService {
+export class PassphrasesService {
   private static readonly DEFAULT_SIMILARITY_THRESHOLD = 3;
 
   public constructor(
@@ -74,7 +74,7 @@ export class PassphraseService {
 
   public async getSimilarPassphraseEntries(
     id: string,
-    threshold = PassphraseService.DEFAULT_SIMILARITY_THRESHOLD,
+    threshold = PassphrasesService.DEFAULT_SIMILARITY_THRESHOLD,
   ) {
     const allPassphrases = await this.prisma.passphrase.findMany({
       where: {

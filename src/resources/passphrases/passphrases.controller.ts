@@ -10,29 +10,29 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { JwtGuard } from 'src/utilities/Guards/jwt.guard';
-import { PassphraseService } from './passphrases.service';
+import { PassphrasesService } from './passphrases.service';
 import RequestCreatePassphrase from './schemas/requests/create';
 import RequestUpdatePassphrase from './schemas/requests/update';
 
 @UseGuards(JwtGuard)
 @ApiBearerAuth()
 @Controller('passphrases')
-export class PassphraseController {
-  constructor(private readonly passphraseService: PassphraseService) {}
+export class PassphrasesController {
+  constructor(private readonly passphrasesService: PassphrasesService) {}
 
   @Get()
   async getPassphrase() {
-    return this.passphraseService.getPassphraseEntries();
+    return this.passphrasesService.getPassphraseEntries();
   }
 
   @Get(':id')
   async getPassphraseById(@Param('id') id: string) {
-    return this.passphraseService.getPassphraseEntryById(id);
+    return this.passphrasesService.getPassphraseEntryById(id);
   }
 
   @Post()
   async createPassphrase(@Body() body: RequestCreatePassphrase) {
-    return this.passphraseService.createPassphraseEntry(body);
+    return this.passphrasesService.createPassphraseEntry(body);
   }
 
   @Patch(':id')
@@ -40,16 +40,16 @@ export class PassphraseController {
     @Param('id') id: string,
     @Body() body: RequestUpdatePassphrase,
   ) {
-    return this.passphraseService.updatePassphraseEntry(id, body);
+    return this.passphrasesService.updatePassphraseEntry(id, body);
   }
 
   @Delete(':id')
   async deletePassphrase(@Param('id') id: string) {
-    return this.passphraseService.deletePassphraseEntry(id);
+    return this.passphrasesService.deletePassphraseEntry(id);
   }
 
   @Get(':id/similar')
   async getSimilarPassphrases(@Param('id') id: string) {
-    return this.passphraseService.getSimilarPassphraseEntries(id);
+    return this.passphrasesService.getSimilarPassphraseEntries(id);
   }
 }
