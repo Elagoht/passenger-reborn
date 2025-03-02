@@ -41,7 +41,7 @@ export class AuthService {
     }
 
     if (!(await this.crypto.compare(body.passphrase, user.password))) {
-      throw new BadRequestException('Invalid passphrase');
+      throw new BadRequestException('Invalid credentials');
     }
 
     return { token: await this.generateToken() };
