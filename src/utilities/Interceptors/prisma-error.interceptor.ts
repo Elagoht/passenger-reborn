@@ -37,22 +37,22 @@ export class PrismaErrorInterceptor implements NestInterceptor {
             // Foreign key constraint failures
             case 'P2003': {
               const fieldName =
-                typeof error.meta?.field_name === 'object'
-                  ? 'unknown'
-                  : (error.meta?.field_name ?? 'unknown');
+                typeof error.meta?.field_name === 'string'
+                  ? error.meta?.field_name
+                  : 'unknown';
               throw new BadRequestException(
-                `Foreign key constraint failed on field: ${fieldName as string}`,
+                `Foreign key constraint failed on field: ${fieldName}`,
               );
             }
 
             // Required field constraint failures
             case 'P2011': {
               const constraint =
-                typeof error.meta?.constraint === 'object'
-                  ? 'unknown'
-                  : (error.meta?.constraint ?? 'unknown');
+                typeof error.meta?.constraint === 'string'
+                  ? error.meta?.constraint
+                  : 'unknown';
               throw new BadRequestException(
-                `Null constraint violation on field: ${constraint as string}`,
+                `Null constraint violation on field: ${constraint}`,
               );
             }
 
