@@ -30,7 +30,7 @@ export class AuthService {
       },
     });
 
-    return { token: await this.generateToken() };
+    return { token: this.generateToken() };
   }
 
   public async login(body: RequestLogin): Promise<ResponseToken> {
@@ -44,7 +44,7 @@ export class AuthService {
       throw new BadRequestException('Invalid credentials');
     }
 
-    return { token: await this.generateToken() };
+    return { token: this.generateToken() };
   }
 
   public async resetPassphrase(body: RequestResetPassphrase) {
@@ -91,7 +91,7 @@ export class AuthService {
    * This is a single user application,
    * so we can sign an empty payload
    */
-  private async generateToken() {
+  private generateToken() {
     return sign({}, Environment.JWT_SECRET, {
       expiresIn: '1h',
     });
