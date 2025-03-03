@@ -179,7 +179,7 @@ export class AccountsService {
       where: {
         platform,
         url,
-        passphrase,
+        passphrase: this.crypto.encrypt(passphrase),
       },
     });
 
