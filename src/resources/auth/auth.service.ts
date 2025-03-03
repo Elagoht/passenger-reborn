@@ -8,6 +8,7 @@ import RequestInitialize from './schemas/requests/initialize';
 import RequestLogin from './schemas/requests/login';
 import { RequestResetPassphrase } from './schemas/requests/reset';
 import ResponseInitialize from './schemas/responses/initialize';
+import { ResponseIsInitialized } from './schemas/responses/is-initialized';
 import ResponseToken from './schemas/responses/token';
 
 @Injectable()
@@ -20,8 +21,10 @@ export class AuthService {
   /**
    * Check if the application has been initialized
    */
-  public async isInitialized(): Promise<boolean> {
-    return !!(await this.prisma.user.findFirst());
+  public async isInitialized(): Promise<ResponseIsInitialized> {
+    return {
+      initialized: !!(await this.prisma.user.findFirst()),
+    };
   }
 
   /**

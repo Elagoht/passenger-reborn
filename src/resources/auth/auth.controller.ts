@@ -19,6 +19,8 @@ import { RequestChangePassphrase } from './schemas/requests/change';
 import RequestInitialize from './schemas/requests/initialize';
 import RequestLogin from './schemas/requests/login';
 import { RequestResetPassphrase } from './schemas/requests/reset';
+import ResponseInitialize from './schemas/responses/initialize';
+import { ResponseIsInitialized } from './schemas/responses/is-initialized';
 import ResponseToken from './schemas/responses/token';
 
 @Controller('auth')
@@ -27,10 +29,7 @@ export class AuthController {
 
   @Get('is-initialized')
   @ApiOperation({ summary: 'Check if the application has been initialized' })
-  @ApiResponse({
-    status: 200,
-    description: 'Application initialized',
-  })
+  @ApiResponse({ type: ResponseIsInitialized })
   async isInitialized() {
     return this.authService.isInitialized();
   }
@@ -38,9 +37,11 @@ export class AuthController {
   @Post('initialize')
   @ApiOperation({ summary: 'Initialize application' })
   @ApiBody({ type: RequestInitialize })
+  @ApiResponse({ type: ResponseInitialize })
   @ApiResponse({
-    status: 200,
-    description: 'Application initialized',
+    status: 400,
+    type: ResponseIsInitialized,
+    description: 'Application already initialized',
   })
   async initialize(@Body() body: RequestInitialize) {
     return this.authService.initialize(body);
