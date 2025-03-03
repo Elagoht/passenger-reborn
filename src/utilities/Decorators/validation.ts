@@ -39,7 +39,7 @@ class IsMasterPassphraseConstraint implements ValidatorConstraintInterface {
 }
 
 export function IsMasterPassphrase(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'isMasterPassphrase',
       target: object.constructor,
