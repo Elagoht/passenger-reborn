@@ -12,13 +12,6 @@ class RequestInitialize {
   @MaxLength(128)
   @IsMasterPassphrase()
   passphrase: string;
-
-  @ApiProperty({
-    example: 'Recovery key',
-  })
-  @IsNotEmpty()
-  @IsString()
-  recoveryKey: string;
 }
 
 export default RequestInitialize;

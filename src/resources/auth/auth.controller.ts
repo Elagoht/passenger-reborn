@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -23,6 +24,16 @@ import ResponseToken from './schemas/responses/token';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Get('is-initialized')
+  @ApiOperation({ summary: 'Check if the application has been initialized' })
+  @ApiResponse({
+    status: 200,
+    description: 'Application initialized',
+  })
+  async isInitialized() {
+    return this.authService.isInitialized();
+  }
 
   @Post('initialize')
   @ApiOperation({ summary: 'Initialize application' })

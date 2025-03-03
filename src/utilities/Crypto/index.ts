@@ -1,32 +1,53 @@
 import { Injectable } from '@nestjs/common';
-import { compare, hash } from 'bcrypt';
 import * as crypto from 'crypto';
 import Environment from '../Environment';
 
 @Injectable()
 export class CryptoService {
-  private static readonly SALT_ROUNDS = 10;
   private static readonly ALGORITHM = 'aes-256-cbc';
   private static readonly IV_LENGTH = 16;
-  private static readonly KEY_LENGTH = 32; // 256 bits = 32 bytes
-  private static readonly SIMHASH_SIZE = 64; // 64-bit simhash
+  private static readonly SIMHASH_SIZE = 64;
+
+  private static readonly PBKDF2_ITERATIONS = 600000;
+  private static readonly PBKDF2_KEYLEN = 32;
+  private static readonly PBKDF2_DIGEST = 'sha256';
+  private static readonly PBKDF2_SALT_LENGTH = 16;
 
   private readonly key: Buffer;
 
   constructor() {
-    // Derive a 32-byte key from the environment key using SHA-256
     this.key = crypto
       .createHash('sha256')
       .update(Environment.ENCRYPTION_KEY)
       .digest();
   }
 
-  async hash(value: string): Promise<string> {
-    return hash(value, CryptoService.SALT_ROUNDS);
+  hashWithPbkdf2(value: string): string {
+    const salt = crypto.randomBytes(CryptoService.PBKDF2_SALT_LENGTH);
+
+    const derivedKey = crypto.pbkdf2Sync(
+      value,
+      salt,
+      CryptoService.PBKDF2_ITERATIONS,
+      CryptoService.PBKDF2_KEYLEN,
+      CryptoService.PBKDF2_DIGEST,
+    );
+
+    return `${CryptoService.PBKDF2_ITERATIONS}:${salt.toString('base64')}:${derivedKey.toString('base64')}`;
   }
 
-  async compare(value: string, hashedValue: string): Promise<boolean> {
-    return compare(value, hashedValue);
+  compareWithPbkdf2(value: string, storedHash: string): boolean {
+    const [iterations, salt, hash] = storedHash.split(':');
+
+    const derivedKey = crypto.pbkdf2Sync(
+      value,
+      Buffer.from(salt, 'base64'),
+      parseInt(iterations, 10),
+      CryptoService.PBKDF2_KEYLEN,
+      CryptoService.PBKDF2_DIGEST,
+    );
+
+    return crypto.timingSafeEqual(derivedKey, Buffer.from(hash, 'base64'));
   }
 
   encrypt(text: string): string {
@@ -121,7 +142,9 @@ export class CryptoService {
     return ngrams;
   }
 
-  // A weak hash function, but it's fast and good enough for our purposes
+  /**
+   * A weak hash function, but it's fast and good enough for our purposes
+   */
   private hashFeature(feature: string): Buffer {
     return crypto.createHash('md5').update(feature).digest();
   }
@@ -133,5 +156,12 @@ export class CryptoService {
       n >>= 1;
     }
     return count;
+  }
+
+  /**
+   * @returns 16 characters long passphrase
+   */
+  public generateRandomPassphrase(): string {
+    return crypto.randomBytes(8).toString('hex');
   }
 }
