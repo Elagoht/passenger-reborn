@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Account, PassphraseHistory } from '@prisma/client';
 import { CryptoService } from 'src/utilities/Crypto';
 import { PrismaService } from 'src/utilities/Prisma';
 import { Strength } from 'src/utilities/Strength';
-import RequestCreatePassphrase from './schemas/requests/create';
-import RequestUpdatePassphrase from './schemas/requests/update';
+import RequestCreateAccount from './schemas/requests/create';
+import RequestUpdateAccount from './schemas/requests/update';
 
 @Injectable()
-export class PassphrasesService {
+export class AccountsService {
   private static readonly DEFAULT_SIMILARITY_THRESHOLD = 3;
 
   public constructor(
@@ -14,16 +15,18 @@ export class PassphrasesService {
     private readonly crypto: CryptoService,
   ) {}
 
-  public async getPassphraseEntries() {
-    const entries = await this.prisma.passphrase.findMany();
+  public async getAccounts(): Promise<Account[]> {
+    const entries = await this.prisma.account.findMany();
     return entries.map((entry) => ({
       ...entry,
       passphrase: this.crypto.decrypt(entry.passphrase),
     }));
   }
 
-  public async getPassphraseEntryById(id: string) {
-    const entry = await this.prisma.passphrase.findUniqueOrThrow({
+  public async getAccountById(
+    id: string,
+  ): Promise<Account & { history: PassphraseHistory[] }> {
+    const entry = await this.prisma.account.findUniqueOrThrow({
       where: { id },
       include: { history: true },
     });
@@ -34,12 +37,12 @@ export class PassphrasesService {
     };
   }
 
-  public async createPassphraseEntry(body: RequestCreatePassphrase) {
+  public async createAccount(body: RequestCreateAccount) {
     const strength = Strength.evaluate(body.passphrase).score;
     const encryptedPassphrase = this.crypto.encrypt(body.passphrase);
     const simhash = this.crypto.generateSimhash(body.passphrase);
 
-    return this.prisma.passphrase.create({
+    return this.prisma.account.create({
       data: {
         passphrase: encryptedPassphrase,
         simhash,
@@ -51,12 +54,9 @@ export class PassphrasesService {
     });
   }
 
-  public async updatePassphraseEntry(
-    id: string,
-    body: RequestUpdatePassphrase,
-  ) {
+  public async updateAccount(id: string, body: RequestUpdateAccount) {
     if (!body.passphrase) {
-      return this.prisma.passphrase.update({
+      return this.prisma.account.update({
         where: { id },
         data: {
           platform: body.platform,
@@ -66,9 +66,9 @@ export class PassphrasesService {
       });
     }
 
-    const shouldUpdate = await this.shouldUpdatePassphrase(id, body.passphrase);
+    const shouldUpdate = await this.shouldUpdateAccount(id, body.passphrase);
     if (!shouldUpdate) {
-      return this.prisma.passphrase.update({
+      return this.prisma.account.update({
         where: { id },
         data: {
           platform: body.platform,
@@ -82,7 +82,7 @@ export class PassphrasesService {
     const encryptedPassphrase = this.crypto.encrypt(body.passphrase);
     const simhash = this.crypto.generateSimhash(body.passphrase);
 
-    return this.prisma.passphrase.update({
+    return this.prisma.account.update({
       where: { id },
       data: {
         passphrase: encryptedPassphrase,
@@ -97,24 +97,24 @@ export class PassphrasesService {
     });
   }
 
-  public async getSimilarPassphraseEntries(
+  public async getSimilarAccounts(
     id: string,
-    threshold = PassphrasesService.DEFAULT_SIMILARITY_THRESHOLD,
+    threshold = AccountsService.DEFAULT_SIMILARITY_THRESHOLD,
   ) {
-    const targetPassphrase = await this.prisma.passphrase.findUnique({
+    const targetPassphrase = await this.prisma.account.findUnique({
       where: { id },
       select: { simhash: true },
     });
 
     if (!targetPassphrase) {
-      throw new NotFoundException('Passphrase not found');
+      throw new NotFoundException('Account not found');
     }
 
-    const allPassphrases = await this.prisma.passphrase.findMany({
+    const allAccounts = await this.prisma.account.findMany({
       where: { id: { not: id } },
     });
 
-    return allPassphrases
+    return allAccounts
       .map((entry) => ({
         ...entry,
         passphrase: this.crypto.decrypt(entry.passphrase),
@@ -126,26 +126,24 @@ export class PassphrasesService {
       .filter((entry) => entry.distance <= threshold);
   }
 
-  public async deletePassphraseEntry(id: string): Promise<void> {
-    await this.prisma.passphrase.delete({ where: { id } });
+  public async deleteAccount(id: string): Promise<void> {
+    await this.prisma.account.delete({ where: { id } });
   }
 
-  private async shouldUpdatePassphrase(
+  private async shouldUpdateAccount(
     id: string,
     newPassphrase: string,
   ): Promise<boolean> {
-    const existingPassphrase = await this.prisma.passphrase.findUnique({
+    const existingAccount = await this.prisma.account.findUnique({
       where: { id },
       select: { passphrase: true },
     });
 
-    if (!existingPassphrase) {
-      throw new NotFoundException('Passphrase not found');
+    if (!existingAccount) {
+      throw new NotFoundException('Account not found');
     }
 
-    const decryptedPassphrase = this.crypto.decrypt(
-      existingPassphrase.passphrase,
-    );
+    const decryptedPassphrase = this.crypto.decrypt(existingAccount.passphrase);
     return decryptedPassphrase !== newPassphrase;
   }
 }

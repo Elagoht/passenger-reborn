@@ -17,7 +17,7 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
-model Passphrase {
+model Account {
   id String @id @default(uuid())
 
   passphrase String
@@ -40,6 +40,6 @@ model PassphraseHistory {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  passphraseId String
-  passphrase   Passphrase @relation("PassphraseHistory", fields: [passphraseId], references: [id], onDelete: Cascade)
+  accountId String?
+  account   Account? @relation("PassphraseHistory", fields: [accountId], references: [id], onDelete: SetNull)
 }

@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
+import { AccountsModule } from './resources/accounts/accounts.module';
 import { AuthModule } from './resources/auth/auth.module';
-import { PassphrasesModule } from './resources/passphrases/passphrases.module';
 import { PrismaModule } from './utilities/Prisma/prisma.module';
 
 @Module({
-  imports: [AuthModule, PrismaModule, PassphrasesModule],
+  imports: [AuthModule, PrismaModule, AccountsModule],
   controllers: [],
   providers: [],
 })

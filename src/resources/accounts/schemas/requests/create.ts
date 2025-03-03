@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-class RequestCreatePassphrase {
+class RequestCreateAccount {
   @ApiProperty({
     example: 'https://example.com',
   })
@@ -32,4 +32,4 @@ class RequestCreatePassphrase {
   @IsOptional()
   icon: string;
 }
-export default RequestCreatePassphrase;
+export default RequestCreateAccount;
