@@ -44,7 +44,7 @@ export class AccountsService {
   public async createAccount(body: RequestCreateAccount) {
     const strength = Strength.evaluate(body.passphrase).score;
     const encryptedPassphrase = this.crypto.encrypt(body.passphrase);
-    const simhash = this.crypto.generateSimhash(body.passphrase);
+    const simHash = this.crypto.generateSimhash(body.passphrase);
 
     await this.validateAccountDoesNotExist(
       body.platform,
@@ -55,7 +55,7 @@ export class AccountsService {
     return this.prisma.account.create({
       data: {
         passphrase: encryptedPassphrase,
-        simhash,
+        simHash,
         platform: body.platform,
         url: body.url,
         note: body.note,
@@ -103,13 +103,13 @@ export class AccountsService {
 
     const strength = Strength.evaluate(body.passphrase).score;
     const encryptedPassphrase = this.crypto.encrypt(body.passphrase);
-    const simhash = this.crypto.generateSimhash(body.passphrase);
+    const simHash = this.crypto.generateSimhash(body.passphrase);
 
     return this.prisma.account.update({
       where: { id },
       data: {
         passphrase: encryptedPassphrase,
-        simhash,
+        simHash,
         platform: body.platform,
         note: body.note,
         icon: body.icon,
@@ -126,7 +126,7 @@ export class AccountsService {
   ) {
     const targetPassphrase = await this.prisma.account.findUnique({
       where: { id },
-      select: { simhash: true },
+      select: { simHash: true },
     });
 
     if (!targetPassphrase) {
@@ -142,8 +142,8 @@ export class AccountsService {
         ...entry,
         passphrase: this.crypto.decrypt(entry.passphrase),
         distance: this.crypto.calculateSimhashDistance(
-          entry.simhash,
-          targetPassphrase.simhash,
+          entry.simHash,
+          targetPassphrase.simHash,
         ),
       }))
       .filter((entry) => entry.distance <= threshold);

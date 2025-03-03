@@ -88,7 +88,7 @@ export class CryptoService {
     // Split text into features (words and character sequences)
     const features = this.extractFeatures(text);
 
-    // Initialize vector for simhash calculation
+    // Initialize vector for simHash calculation
     const vector = new Array(CryptoService.SIMHASH_SIZE).fill(0);
 
     // For each feature, calculate its hash and update vector
@@ -105,15 +105,15 @@ export class CryptoService {
       }
     });
 
-    // Convert vector to final simhash
-    const simhash = Buffer.alloc(CryptoService.SIMHASH_SIZE / 8);
+    // Convert vector to final simHash
+    const simHash = Buffer.alloc(CryptoService.SIMHASH_SIZE / 8);
     for (let i = 0; i < CryptoService.SIMHASH_SIZE; i++) {
       if (vector[i] > 0) {
-        simhash[Math.floor(i / 8)] |= 1 << i % 8;
+        simHash[Math.floor(i / 8)] |= 1 << i % 8;
       }
     }
 
-    return simhash.toString('hex');
+    return simHash.toString('hex');
   }
 
   calculateSimhashDistance(hash1: string, hash2: string): number {
