@@ -2,9 +2,9 @@ export default class Reporter {
   static levenshteinDistance(str1: string, str2: string): number {
     const m = str1.length;
     const n = str2.length;
-    const dp: number[][] = Array(m + 1)
-      .fill(null)
-      .map(() => Array(n + 1).fill(0));
+    const dp: number[][] = Array.from({ length: m + 1 }, () =>
+      Array.from({ length: n + 1 }, () => 0),
+    );
 
     for (let i = 0; i <= m; i++) dp[i][0] = i;
     for (let j = 0; j <= n; j++) dp[0][j] = j;

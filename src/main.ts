@@ -14,4 +14,4 @@ async function bootstrap() {
   await app.listen(Environment.PORT);
 }
 
-bootstrap();
+void bootstrap();

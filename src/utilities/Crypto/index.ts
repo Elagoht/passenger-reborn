@@ -33,7 +33,9 @@ export class CryptoService {
       CryptoService.PBKDF2_DIGEST,
     );
 
-    return `${CryptoService.PBKDF2_ITERATIONS}:${salt.toString('base64')}:${derivedKey.toString('base64')}`;
+    return `${CryptoService.PBKDF2_ITERATIONS}:${salt.toString(
+      'base64',
+    )}:${derivedKey.toString('base64')}`;
   }
 
   compareWithPbkdf2(value: string, storedHash: string): boolean {
