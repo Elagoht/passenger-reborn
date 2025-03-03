@@ -121,6 +121,7 @@ export class CryptoService {
     return ngrams;
   }
 
+  // A weak hash function, but it's fast and good enough for our purposes
   private hashFeature(feature: string): Buffer {
     return crypto.createHash('md5').update(feature).digest();
   }
