@@ -25,7 +25,7 @@ model Passphrase {
   note       String?
   icon       String?
 
-  history PassphraseHistory[]
+  history PassphraseHistory[] @relation("PassphraseHistory")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -40,5 +40,5 @@ model PassphraseHistory {
   updatedAt DateTime @updatedAt
 
   passphraseId String
-  passphrase   Passphrase @relation(fields: [passphraseId], references: [id])
+  passphrase   Passphrase @relation("PassphraseHistory", fields: [passphraseId], references: [id], onDelete: Cascade)
 }

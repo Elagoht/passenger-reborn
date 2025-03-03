@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -56,6 +57,7 @@ export class PassphrasesController {
   }
 
   @Delete(':id')
+  @HttpCode(204)
   @ApiOperation({
     summary: 'Delete a passphrase by ID',
   })

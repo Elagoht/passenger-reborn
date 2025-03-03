@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CryptoService } from 'src/utilities/Crypto';
 import { PrismaService } from 'src/utilities/Prisma';
 import Reporter from 'src/utilities/Reporter';
 import { Strength } from 'src/utilities/Strength';
@@ -10,10 +9,7 @@ import RequestUpdatePassphrase from './schemas/requests/update';
 export class PassphrasesService {
   private static readonly DEFAULT_SIMILARITY_THRESHOLD = 3;
 
-  public constructor(
-    private readonly prisma: PrismaService,
-    private readonly crypto: CryptoService,
-  ) {}
+  public constructor(private readonly prisma: PrismaService) {}
 
   public async getPassphraseEntries() {
     return this.prisma.passphrase.findMany();
@@ -27,18 +23,15 @@ export class PassphrasesService {
   }
 
   public async createPassphraseEntry(body: RequestCreatePassphrase) {
-    const hashedPassphrase = await this.crypto.hash(body.passphrase);
     const strength = Strength.evaluate(body.passphrase).score;
 
     return this.prisma.passphrase.create({
       data: {
-        passphrase: hashedPassphrase,
+        passphrase: body.passphrase,
         platform: body.platform,
         note: body.note,
         icon: body.icon,
-        history: {
-          create: { strength },
-        },
+        history: { create: { strength } },
       },
     });
   }
@@ -70,13 +63,12 @@ export class PassphrasesService {
       });
     }
 
-    const hashedPassphrase = await this.crypto.hash(body.passphrase);
     const strength = Strength.evaluate(body.passphrase).score;
 
     return this.prisma.passphrase.update({
       where: { id },
       data: {
-        passphrase: hashedPassphrase,
+        passphrase: body.passphrase,
         platform: body.platform,
         note: body.note,
         icon: body.icon,
@@ -91,25 +83,31 @@ export class PassphrasesService {
     id: string,
     threshold = PassphrasesService.DEFAULT_SIMILARITY_THRESHOLD,
   ) {
-    const allPassphrases = await this.prisma.passphrase.findMany({
-      where: {
-        id: { not: id },
-      },
+    const targetPassphrase = await this.prisma.passphrase.findUnique({
+      where: { id },
     });
 
-    const similaritry = allPassphrases.map((passphrase) => ({
-      ...passphrase,
-      distance: Reporter.levenshteinDistance(
-        passphrase.passphrase,
-        passphrase.passphrase,
-      ),
-    }));
+    if (!targetPassphrase) {
+      throw new NotFoundException('Passphrase not found');
+    }
 
-    return similaritry.filter((passphrase) => passphrase.distance <= threshold);
+    const allPassphrases = await this.prisma.passphrase.findMany({
+      where: { id: { not: id } },
+    });
+
+    return allPassphrases
+      .map((entry) => ({
+        ...entry,
+        distance: Reporter.levenshteinDistance(
+          entry.passphrase,
+          targetPassphrase.passphrase,
+        ),
+      }))
+      .filter((entry) => entry.distance <= threshold);
   }
 
-  public async deletePassphraseEntry(id: string) {
-    return this.prisma.passphrase.delete({ where: { id } });
+  public async deletePassphraseEntry(id: string): Promise<void> {
+    await this.prisma.passphrase.delete({ where: { id } });
   }
 
   private async shouldUpdatePassphrase(
@@ -125,11 +123,6 @@ export class PassphrasesService {
       throw new NotFoundException('Passphrase not found');
     }
 
-    const isSame = await this.crypto.compare(
-      newPassphrase,
-      existingPassphrase.passphrase,
-    );
-
-    return !isSame;
+    return existingPassphrase.passphrase !== newPassphrase;
   }
 }
