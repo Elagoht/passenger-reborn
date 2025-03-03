@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Account, PassphraseHistory } from '@prisma/client';
 import { CryptoService } from 'src/utilities/Crypto';
 import { PrismaService } from 'src/utilities/Prisma';
@@ -42,11 +46,18 @@ export class AccountsService {
     const encryptedPassphrase = this.crypto.encrypt(body.passphrase);
     const simhash = this.crypto.generateSimhash(body.passphrase);
 
+    await this.validateAccountDoesNotExist(
+      body.platform,
+      body.url,
+      encryptedPassphrase,
+    );
+
     return this.prisma.account.create({
       data: {
         passphrase: encryptedPassphrase,
         simhash,
         platform: body.platform,
+        url: body.url,
         note: body.note,
         icon: body.icon,
         history: { create: { strength } },
@@ -55,11 +66,22 @@ export class AccountsService {
   }
 
   public async updateAccount(id: string, body: RequestUpdateAccount) {
+    const currentAccount = await this.prisma.account.findUniqueOrThrow({
+      where: { id },
+    });
+
     if (!body.passphrase) {
+      await this.validateAccountDoesNotExist(
+        body.platform ?? currentAccount.platform,
+        body.url ?? currentAccount.url,
+        body.passphrase ?? currentAccount.passphrase,
+      );
+
       return this.prisma.account.update({
         where: { id },
         data: {
           platform: body.platform,
+          url: body.url,
           note: body.note,
           icon: body.icon,
         },
@@ -67,6 +89,7 @@ export class AccountsService {
     }
 
     const shouldUpdate = await this.shouldUpdateAccount(id, body.passphrase);
+
     if (!shouldUpdate) {
       return this.prisma.account.update({
         where: { id },
@@ -145,5 +168,23 @@ export class AccountsService {
 
     const decryptedPassphrase = this.crypto.decrypt(existingAccount.passphrase);
     return decryptedPassphrase !== newPassphrase;
+  }
+
+  private async validateAccountDoesNotExist(
+    platform: string,
+    url: string,
+    passphrase: string,
+  ) {
+    const existingAccount = await this.prisma.account.findFirst({
+      where: {
+        platform,
+        url,
+        passphrase,
+      },
+    });
+
+    if (existingAccount) {
+      throw new BadRequestException('Account already exists');
+    }
   }
 }

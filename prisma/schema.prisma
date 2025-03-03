@@ -22,9 +22,11 @@ model Account {
 
   passphrase String
   simhash    String
-  platform   String
-  note       String?
-  icon       String?
+
+  platform String
+  url      String
+  note     String?
+  icon     String?
 
   history PassphraseHistory[] @relation("PassphraseHistory")
 

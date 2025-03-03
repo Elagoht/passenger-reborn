@@ -1,17 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
 
 class RequestCreateAccount {
-  @ApiProperty({
-    example: 'https://example.com',
-  })
+  @ApiProperty({ example: 'Example' })
   @IsString()
   @IsNotEmpty()
   platform: string;
 
-  @ApiProperty({
-    example: 'my-super-secret-password',
-  })
+  @ApiProperty({ example: 'https://example.com' })
+  @IsUrl()
+  @IsNotEmpty()
+  url: string;
+
+  @ApiProperty({ example: 'my-super-secret-password' })
   @IsString()
   @IsNotEmpty()
   passphrase: string;
