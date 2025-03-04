@@ -28,12 +28,17 @@ model Account {
   note     String?
   icon     String?
 
-  history PassphraseHistory[] @relation("PassphraseHistory")
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  tags        Tag[]
+  collections Collection[]
+
+  history PassphraseHistory[] @relation("PassphraseHistory")
+
   @@unique([url, platform, passphrase])
+  @@index([platform])
+  @@index([simHash])
 }
 
 model PassphraseHistory {
@@ -41,9 +46,37 @@ model PassphraseHistory {
 
   strength Int
 
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  accountId String?
+  account   Account? @relation("PassphraseHistory", fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model Collection {
+  id String @id @default(uuid())
+
+  name String  @unique
+  note String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  accountId String?
-  account   Account? @relation("PassphraseHistory", fields: [accountId], references: [id], onDelete: SetNull)
+  accounts Account[]
+
+  @@index([name])
+}
+
+model Tag {
+  id String @id @default(uuid())
+
+  name String  @unique
+  note String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts Account[]
+
+  @@index([name])
 }
