@@ -1,15 +1,14 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { Account, PassphraseHistory } from '@prisma/client';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CryptoService } from 'src/utilities/Crypto';
 import Pagination from 'src/utilities/Pagination';
 import { PrismaService } from 'src/utilities/Prisma';
 import { Strength } from 'src/utilities/Strength';
 import RequestCreateAccount from './schemas/requests/create';
 import RequestUpdateAccount from './schemas/requests/update';
+import {
+  ResponseAccountDetails,
+  ResponseAccountItem,
+} from './schemas/responses/accounts';
 
 @Injectable()
 export class AccountsService {
@@ -22,44 +21,32 @@ export class AccountsService {
 
   public async getAccounts(
     paginationParams: PaginationParams,
-  ): Promise<Account[]> {
+  ): Promise<ResponseAccountItem[]> {
     const pagination = new Pagination(paginationParams);
 
-    const entries = await this.prisma.account.findMany({
+    return await this.prisma.account.findMany({
       ...pagination.getQuery(),
       ...pagination.sortOldestAdded(),
+      select: this.selectStandardFields(),
     });
-
-    return entries.map((entry) => ({
-      ...entry,
-      passphrase: this.crypto.decrypt(entry.passphrase),
-    }));
   }
 
-  public async getAccountById(
-    id: string,
-  ): Promise<Account & { history: PassphraseHistory[] }> {
-    const entry = await this.prisma.account.findUniqueOrThrow({
+  public async getAccountById(id: string): Promise<ResponseAccountDetails> {
+    return await this.prisma.account.findUniqueOrThrow({
       where: { id },
-      include: { history: true },
+      select: {
+        ...this.selectStandardFields(),
+        history: {
+          select: { strength: true, createdAt: true, deletedAt: true },
+        },
+      },
     });
-
-    return {
-      ...entry,
-      passphrase: this.crypto.decrypt(entry.passphrase),
-    };
   }
 
   public async createAccount(body: RequestCreateAccount) {
     const strength = Strength.evaluate(body.passphrase).score;
     const encryptedPassphrase = this.crypto.encrypt(body.passphrase);
     const simHash = this.crypto.generateSimhash(body.passphrase);
-
-    await this.validateAccountDoesNotExist(
-      body.platform,
-      body.url,
-      encryptedPassphrase,
-    );
 
     return this.prisma.account.create({
       data: {
@@ -75,17 +62,8 @@ export class AccountsService {
   }
 
   public async updateAccount(id: string, body: RequestUpdateAccount) {
-    const currentAccount = await this.prisma.account.findUniqueOrThrow({
-      where: { id },
-    });
-
+    // If the passphrase is not provided, we can just update the account
     if (!body.passphrase) {
-      await this.validateAccountDoesNotExist(
-        body.platform ?? currentAccount.platform,
-        body.url ?? currentAccount.url,
-        body.passphrase ?? currentAccount.passphrase,
-      );
-
       return this.prisma.account.update({
         where: { id },
         data: {
@@ -97,35 +75,15 @@ export class AccountsService {
       });
     }
 
-    const shouldUpdate = await this.shouldUpdateAccount(id, body.passphrase);
-
-    if (!shouldUpdate) {
-      return this.prisma.account.update({
-        where: { id },
-        data: {
-          platform: body.platform,
-          note: body.note,
-          icon: body.icon,
-        },
-      });
+    // If the passphrase has changed, we need to update the account
+    if (await this.shouldUpdateHistory(id, body.passphrase)) {
+      await this.updateAccountWithNewPassphrase(id, body.passphrase, body);
     }
 
-    const strength = Strength.evaluate(body.passphrase).score;
-    const encryptedPassphrase = this.crypto.encrypt(body.passphrase);
-    const simHash = this.crypto.generateSimhash(body.passphrase);
-
+    // Otherwise, we just update the account
     return this.prisma.account.update({
       where: { id },
-      data: {
-        passphrase: encryptedPassphrase,
-        simHash,
-        platform: body.platform,
-        note: body.note,
-        icon: body.icon,
-        history: {
-          create: { strength },
-        },
-      },
+      data: { platform: body.platform, note: body.note, icon: body.icon },
     });
   }
 
@@ -178,38 +136,57 @@ export class AccountsService {
     });
   }
 
-  private async shouldUpdateAccount(
+  private async shouldUpdateHistory(
     id: string,
     newPassphrase: string,
   ): Promise<boolean> {
-    const existingAccount = await this.prisma.account.findUnique({
+    const existingAccount = await this.prisma.account.findUniqueOrThrow({
       where: { id },
       select: { passphrase: true },
     });
 
-    if (!existingAccount) {
-      throw new NotFoundException('Account not found');
-    }
-
-    const decryptedPassphrase = this.crypto.decrypt(existingAccount.passphrase);
-    return decryptedPassphrase !== newPassphrase;
+    return this.crypto.decrypt(existingAccount.passphrase) !== newPassphrase;
   }
 
-  private async validateAccountDoesNotExist(
-    platform: string,
-    url: string,
+  private selectTagFields() {
+    return {
+      select: {
+        id: true,
+        name: true,
+        icon: true,
+        color: true,
+      },
+    };
+  }
+
+  private selectStandardFields() {
+    return {
+      id: true,
+      platform: true,
+      url: true,
+      note: true,
+      icon: true,
+      tags: this.selectTagFields(),
+    };
+  }
+
+  private async updateAccountWithNewPassphrase(
+    id: string,
     passphrase: string,
+    body: RequestUpdateAccount,
   ) {
-    const existingAccount = await this.prisma.account.findFirst({
-      where: {
-        platform,
-        url,
+    return this.prisma.account.update({
+      where: { id },
+      data: {
         passphrase: this.crypto.encrypt(passphrase),
+        simHash: this.crypto.generateSimhash(passphrase),
+        platform: body.platform,
+        note: body.note,
+        icon: body.icon,
+        history: {
+          create: { strength: Strength.evaluate(passphrase).score },
+        },
       },
     });
-
-    if (existingAccount) {
-      throw new BadRequestException('Account already exists');
-    }
   }
 }

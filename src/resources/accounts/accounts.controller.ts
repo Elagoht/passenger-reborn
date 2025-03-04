@@ -13,6 +13,7 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { PaginationQuery } from 'src/utilities/Decorators/pagination-query.decorator';
@@ -21,6 +22,7 @@ import { JwtGuard } from 'src/utilities/Guards/jwt.guard';
 import { AccountsService } from './accounts.service';
 import RequestCreateAccount from './schemas/requests/create';
 import RequestUpdateAccount from './schemas/requests/update';
+import { ResponseAccountItem } from './schemas/responses/accounts';
 
 @UseGuards(JwtGuard)
 @ApiBearerAuth()
@@ -32,6 +34,7 @@ export class AccountsController {
   @Get()
   @ApiOperation({ summary: 'Get all accounts' })
   @PaginationQuery()
+  @ApiResponse({ type: [ResponseAccountItem] })
   public async getAccounts(@Pagination() pagination: PaginationParams) {
     return this.accountsService.getAccounts(pagination);
   }
