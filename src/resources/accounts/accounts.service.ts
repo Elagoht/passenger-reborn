@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { Account, PassphraseHistory } from '@prisma/client';
 import { CryptoService } from 'src/utilities/Crypto';
+import Pagination from 'src/utilities/Pagination';
 import { PrismaService } from 'src/utilities/Prisma';
 import { Strength } from 'src/utilities/Strength';
 import RequestCreateAccount from './schemas/requests/create';
@@ -19,8 +20,16 @@ export class AccountsService {
     private readonly crypto: CryptoService,
   ) {}
 
-  public async getAccounts(): Promise<Account[]> {
-    const entries = await this.prisma.account.findMany();
+  public async getAccounts(
+    paginationParams: PaginationParams,
+  ): Promise<Account[]> {
+    const pagination = new Pagination(paginationParams);
+
+    const entries = await this.prisma.account.findMany({
+      ...pagination.getQuery(),
+      ...pagination.sortOldestAdded(),
+    });
+
     return entries.map((entry) => ({
       ...entry,
       passphrase: this.crypto.decrypt(entry.passphrase),

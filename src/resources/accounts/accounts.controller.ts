@@ -15,6 +15,8 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+import { PaginationQuery } from 'src/utilities/Decorators/pagination-query.decorator';
+import { Pagination } from 'src/utilities/Decorators/pagination.decorator';
 import { JwtGuard } from 'src/utilities/Guards/jwt.guard';
 import { AccountsService } from './accounts.service';
 import RequestCreateAccount from './schemas/requests/create';
@@ -28,11 +30,10 @@ export class AccountsController {
   public constructor(private readonly accountsService: AccountsService) {}
 
   @Get()
-  @ApiOperation({
-    summary: 'Get all accounts',
-  })
-  public async getAccounts() {
-    return this.accountsService.getAccounts();
+  @ApiOperation({ summary: 'Get all accounts' })
+  @PaginationQuery()
+  public async getAccounts(@Pagination() pagination: PaginationParams) {
+    return this.accountsService.getAccounts(pagination);
   }
 
   @Get(':id')
