@@ -1,13 +1,17 @@
 import { Injectable } from '@nestjs/common';
+import { ResponseId } from 'src/utilities/Common/schemas/id';
 import { PrismaService } from 'src/utilities/Prisma';
-import RequestCreateCollection from './schemas/create';
-import { RequestUpdateCollection } from './schemas/update';
+import { RequestCreateCollection } from './schemas/requests/create';
+import { RequestUpdateCollection } from './schemas/requests/update';
+import { ResponseCollection } from './schemas/responses/collections';
 
 @Injectable()
 export class CollectionsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  public async createCollection(data: RequestCreateCollection) {
+  public async createCollection(
+    data: RequestCreateCollection,
+  ): Promise<ResponseId> {
     const collection = await this.prisma.collection.create({ data });
     return { id: collection.id };
   }
@@ -34,7 +38,7 @@ export class CollectionsService {
     }));
   }
 
-  public async getCollection(id: string) {
+  public async getCollection(id: string): Promise<ResponseCollection> {
     return await this.prisma.collection.findUniqueOrThrow({
       where: { id },
       select: {
@@ -50,29 +54,28 @@ export class CollectionsService {
             url: true,
             note: true,
             icon: true,
-            tags: {
-              select: {
-                id: true,
-                name: true,
-                color: true,
-                icon: true,
-              },
-            },
+            tags: { select: { id: true, name: true, color: true, icon: true } },
           },
         },
       },
     });
   }
 
-  public async updateCollection(id: string, data: RequestUpdateCollection) {
+  public async updateCollection(
+    id: string,
+    data: RequestUpdateCollection,
+  ): Promise<void> {
     await this.prisma.collection.update({ where: { id }, data });
   }
 
-  public async deleteCollection(id: string) {
+  public async deleteCollection(id: string): Promise<void> {
     await this.prisma.collection.delete({ where: { id } });
   }
 
-  public async addAccountToCollection(collectionId: string, accountId: string) {
+  public async addAccountToCollection(
+    collectionId: string,
+    accountId: string,
+  ): Promise<void> {
     await this.prisma.collection.update({
       where: { id: collectionId },
       data: {
@@ -86,7 +89,7 @@ export class CollectionsService {
   public async removeAccountFromCollection(
     collectionId: string,
     accountId: string,
-  ) {
+  ): Promise<void> {
     await this.prisma.collection.update({
       where: { id: collectionId },
       data: {

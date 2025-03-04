@@ -15,12 +15,18 @@ import {
   ApiBody,
   ApiOperation,
   ApiParam,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { ResponseId } from 'src/utilities/Common/schemas/id';
 import { JwtGuard } from 'src/utilities/Guards/jwt.guard';
 import { CollectionsService } from './collections.service';
-import RequestCreateCollection from './schemas/create';
-import { RequestUpdateCollection } from './schemas/update';
+import { RequestCreateCollection } from './schemas/requests/create';
+import { RequestUpdateCollection } from './schemas/requests/update';
+import {
+  ResponseCollection,
+  ResponseCollectionListItem,
+} from './schemas/responses/collections';
 
 @UseGuards(JwtGuard)
 @ApiBearerAuth()
@@ -32,18 +38,21 @@ export class CollectionsController {
   @Post()
   @ApiOperation({ summary: 'Create a new collection' })
   @ApiBody({ type: RequestCreateCollection })
+  @ApiResponse({ type: ResponseId })
   public createCollection(@Body() data: RequestCreateCollection) {
     return this.collectionsService.createCollection(data);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all collections' })
+  @ApiResponse({ type: [ResponseCollectionListItem] })
   public getCollections() {
     return this.collectionsService.getCollections();
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a collection by id' })
+  @ApiResponse({ type: ResponseCollection })
   public getCollection(@Param('id') id: string) {
     return this.collectionsService.getCollection(id);
   }
@@ -70,6 +79,7 @@ export class CollectionsController {
   @ApiOperation({ summary: 'Add an account to a collection' })
   @ApiParam({ name: 'id', description: 'Collection ID' })
   @ApiParam({ name: 'accountId', description: 'Account ID' })
+  @HttpCode(HttpStatus.OK)
   public addAccountToCollection(
     @Param('id') id: string,
     @Param('accountId') accountId: string,
