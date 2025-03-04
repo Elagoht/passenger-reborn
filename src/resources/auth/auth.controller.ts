@@ -12,6 +12,7 @@ import {
   ApiBody,
   ApiOperation,
   ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 import { JwtGuard } from 'src/utilities/Guards/jwt.guard';
 import { AuthService } from './auth.service';
@@ -24,6 +25,7 @@ import { ResponseIsInitialized } from './schemas/responses/is-initialized';
 import ResponseToken from './schemas/responses/token';
 
 @Controller('auth')
+@ApiTags('Auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

@@ -15,6 +15,7 @@ import {
   ApiBody,
   ApiOperation,
   ApiParam,
+  ApiTags,
 } from '@nestjs/swagger';
 import { JwtGuard } from 'src/utilities/Guards/jwt.guard';
 import { CollectionsService } from './collections.service';
@@ -24,6 +25,7 @@ import { RequestUpdateCollection } from './schemas/update';
 @UseGuards(JwtGuard)
 @ApiBearerAuth()
 @Controller('collections')
+@ApiTags('Collections')
 export class CollectionsController {
   public constructor(private readonly collectionsService: CollectionsService) {}
 

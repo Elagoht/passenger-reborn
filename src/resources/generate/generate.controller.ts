@@ -1,10 +1,17 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { GenerateService } from './generate.service';
 import AlternativeRequest from './schemas/request/alternative';
 import GeneratedResponse from './schemas/response/generated';
 
 @Controller('generate')
+@ApiTags('Generate')
 export class GenerateController {
   constructor(private readonly generateService: GenerateService) {}
 

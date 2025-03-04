@@ -22,8 +22,8 @@ import RequestUpdateAccount from './schemas/requests/update';
 
 @UseGuards(JwtGuard)
 @ApiBearerAuth()
-@ApiTags('accounts')
 @Controller('accounts')
+@ApiTags('Accounts')
 export class AccountsController {
   public constructor(private readonly accountsService: AccountsService) {}
 
