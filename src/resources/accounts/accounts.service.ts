@@ -11,6 +11,7 @@ import {
   ResponseAccountItem,
   ResponseAccountSimilar,
 } from './schemas/responses/accounts';
+import { ResponsePassphrase } from './schemas/responses/passphrase';
 
 @Injectable()
 export class AccountsService {
@@ -204,5 +205,16 @@ export class AccountsService {
         },
       },
     });
+  }
+
+  public async getAccountPassphrase(id: string): Promise<ResponsePassphrase> {
+    const account = await this.prisma.account.findUniqueOrThrow({
+      where: { id },
+      select: { passphrase: true },
+    });
+
+    return {
+      passphrase: this.crypto.decrypt(account.passphrase),
+    };
   }
 }

@@ -29,6 +29,7 @@ import {
   ResponseAccountItem,
   ResponseAccountSimilar,
 } from './schemas/responses/accounts';
+import { ResponsePassphrase } from './schemas/responses/passphrase';
 
 @UseGuards(JwtGuard)
 @ApiBearerAuth()
@@ -104,5 +105,12 @@ export class AccountsController {
     @Param('tagId') tagId: string,
   ) {
     return this.accountsService.removeTagFromAccount(id, tagId);
+  }
+
+  @Get(':id/passphrase')
+  @ApiOperation({ summary: 'Get the decrypted passphrase for an account' })
+  @ApiResponse({ type: ResponsePassphrase })
+  public async getAccountPassphrase(@Param('id') id: string) {
+    return this.accountsService.getAccountPassphrase(id);
   }
 }
