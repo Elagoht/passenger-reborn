@@ -81,3 +81,13 @@ model Tag {
 
   @@index([name])
 }
+
+model StrengthCache {
+  id    String @id @default(uuid())
+  date  String // YYYY-MM-DD String
+  sum   Float
+  count Int
+
+  @@unique([date])
+  @@index([date])
+}

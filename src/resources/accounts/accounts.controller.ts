@@ -25,7 +25,6 @@ import { AccountsService } from './accounts.service';
 import RequestCreateAccount from './schemas/requests/create';
 import RequestUpdateAccount from './schemas/requests/update';
 import {
-  ResponseAccountDetails,
   ResponseAccountItem,
   ResponseAccountSimilar,
 } from './schemas/responses/accounts';
@@ -47,8 +46,8 @@ export class AccountsController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get an account by ID and its history' })
-  @ApiResponse({ type: ResponseAccountDetails })
+  @ApiOperation({ summary: 'Get an account by ID' })
+  @ApiResponse({ type: ResponseAccountItem })
   public async getAccountById(@Param('id') id: string) {
     return this.accountsService.getAccountById(id);
   }

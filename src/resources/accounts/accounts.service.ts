@@ -4,10 +4,10 @@ import { CryptoService } from 'src/utilities/Crypto';
 import Pagination from 'src/utilities/Pagination';
 import { PrismaService } from 'src/utilities/Prisma';
 import { Strength } from 'src/utilities/Strength';
+import { StatsService } from '../stats/stats.service';
 import RequestCreateAccount from './schemas/requests/create';
 import RequestUpdateAccount from './schemas/requests/update';
 import {
-  ResponseAccountDetails,
   ResponseAccountItem,
   ResponseAccountSimilar,
 } from './schemas/responses/accounts';
@@ -20,6 +20,7 @@ export class AccountsService {
   public constructor(
     private readonly prisma: PrismaService,
     private readonly crypto: CryptoService,
+    private readonly statsService: StatsService,
   ) {}
 
   public async getAccounts(
@@ -34,18 +35,15 @@ export class AccountsService {
     });
   }
 
-  public async getAccountById(id: string): Promise<ResponseAccountDetails> {
+  public async getAccountById(id: string): Promise<ResponseAccountItem> {
     return await this.prisma.account.findUniqueOrThrow({
       where: { id },
-      select: {
-        ...this.selectStandardFields(),
-        ...this.selectHistoryFields(),
-      },
+      select: this.selectStandardFields(),
     });
   }
 
   public async createAccount(body: RequestCreateAccount): Promise<ResponseId> {
-    return await this.prisma.account.create({
+    const result = await this.prisma.account.create({
       data: {
         passphrase: this.crypto.encrypt(body.passphrase),
         simHash: this.crypto.generateSimhash(body.passphrase),
@@ -59,6 +57,8 @@ export class AccountsService {
       },
       select: { id: true },
     });
+
+    return result;
   }
 
   public async updateAccount(
@@ -106,7 +106,6 @@ export class AccountsService {
       select: {
         simHash: true,
         ...this.selectStandardFields(),
-        ...this.selectHistoryFields(),
       },
     });
 
@@ -172,18 +171,6 @@ export class AccountsService {
       note: true,
       icon: true,
       tags: this.selectTagFields(),
-    };
-  }
-
-  private selectHistoryFields() {
-    return {
-      history: {
-        select: {
-          strength: true,
-          createdAt: true,
-          deletedAt: true,
-        },
-      },
     };
   }
 
