@@ -56,8 +56,8 @@ model PassphraseHistory {
 model Collection {
   id String @id @default(uuid())
 
-  name String  @unique
-  note String?
+  name        String  @unique
+  description String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -70,8 +70,9 @@ model Collection {
 model Tag {
   id String @id @default(uuid())
 
-  name String  @unique
-  note String?
+  name  String @unique
+  icon  Int
+  color String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

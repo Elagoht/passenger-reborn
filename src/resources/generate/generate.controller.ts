@@ -3,6 +3,7 @@ import { ApiBody, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { GenerateService } from './generate.service';
 import AlternativeRequest from './schemas/request/alternative';
 import GeneratedResponse from './schemas/response/generated';
+
 @Controller('generate')
 export class GenerateController {
   constructor(private readonly generateService: GenerateService) {}
