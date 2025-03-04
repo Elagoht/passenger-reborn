@@ -78,11 +78,7 @@ export class CollectionsService {
   ): Promise<void> {
     await this.prisma.collection.update({
       where: { id: collectionId },
-      data: {
-        accounts: {
-          connect: { id: accountId },
-        },
-      },
+      data: { accounts: { connect: { id: accountId } } },
     });
   }
 
@@ -92,14 +88,8 @@ export class CollectionsService {
   ): Promise<void> {
     await this.prisma.collection.update({
       where: { id: collectionId },
-      data: {
-        accounts: {
-          disconnect: { id: accountId },
-        },
-      },
-      include: {
-        accounts: true,
-      },
+      data: { accounts: { disconnect: { id: accountId } } },
+      include: { accounts: true },
     });
   }
 }
