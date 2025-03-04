@@ -22,6 +22,7 @@ import RequestLogin from './schemas/requests/login';
 import { RequestResetPassphrase } from './schemas/requests/reset';
 import ResponseInitialize from './schemas/responses/initialize';
 import { ResponseIsInitialized } from './schemas/responses/is-initialized';
+import { ResponseResetPassphrase } from './schemas/responses/reset';
 import ResponseToken from './schemas/responses/token';
 
 @Controller('auth')
@@ -40,11 +41,6 @@ export class AuthController {
   @ApiOperation({ summary: 'Initialize application' })
   @ApiBody({ type: RequestInitialize })
   @ApiResponse({ type: ResponseInitialize })
-  @ApiResponse({
-    status: 400,
-    type: ResponseIsInitialized,
-    description: 'Application already initialized',
-  })
   async initialize(@Body() body: RequestInitialize) {
     return this.authService.initialize(body);
   }
@@ -53,22 +49,18 @@ export class AuthController {
   @ApiOperation({ summary: 'Get access token' })
   @ApiBody({ type: RequestLogin })
   @HttpCode(HttpStatus.OK)
-  @ApiResponse({
-    status: 200,
-    description: 'Login successful',
-    type: ResponseToken,
-  })
+  @ApiResponse({ type: ResponseToken })
   async login(@Body() body: RequestLogin) {
     return this.authService.login(body);
   }
 
   @Post('reset-passphrase')
-  @ApiOperation({ summary: 'Reset passphrase using recovery key' })
-  @ApiBody({ type: RequestResetPassphrase })
-  @ApiResponse({
-    status: 200,
-    description: 'Passphrase reset successful',
+  @ApiOperation({
+    summary:
+      'Reset passphrase using recovery key, get an auto generated one to change later',
   })
+  @ApiBody({ type: RequestResetPassphrase })
+  @ApiResponse({ type: ResponseResetPassphrase })
   async resetPassphrase(@Body() body: RequestResetPassphrase) {
     return this.authService.resetPassphrase(body);
   }
@@ -78,6 +70,7 @@ export class AuthController {
   @ApiBody({ type: RequestChangePassphrase })
   @UseGuards(JwtGuard)
   @ApiBearerAuth()
+  @HttpCode(HttpStatus.NO_CONTENT)
   async changePassphrase(@Body() body: RequestChangePassphrase) {
     return this.authService.changePassphrase(body);
   }

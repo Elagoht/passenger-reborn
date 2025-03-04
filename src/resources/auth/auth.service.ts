@@ -101,14 +101,9 @@ export class AuthService {
    * Change the passphrase by providing jwt token
    */
   public async changePassphrase(body: RequestChangePassphrase) {
-    const user = await this.prisma.user.findFirst();
-
-    if (!user) {
-      throw new BadRequestException('Application has not been setup yet');
-    }
-
-    await this.prisma.user.update({
-      where: { id: user.id },
+    // Only one user can exist
+    await this.prisma.user.updateMany({
+      where: {},
       data: {
         password: this.crypto.hashWithPbkdf2(body.passphrase),
       },
@@ -120,8 +115,6 @@ export class AuthService {
    * so we can sign an empty payload
    */
   private generateToken() {
-    return sign({}, Environment.JWT_SECRET, {
-      expiresIn: '1h',
-    });
+    return sign({}, Environment.JWT_SECRET, { expiresIn: '1h' });
   }
 }

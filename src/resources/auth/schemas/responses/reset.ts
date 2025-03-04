@@ -7,5 +7,5 @@ export class ResponseResetPassphrase {
     example: 'new-passphrase',
   })
   @IsNotEmpty()
-  passphrase: string;
+  assignedPassphrase: string;
 }
