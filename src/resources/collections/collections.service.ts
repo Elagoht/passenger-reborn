@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Collection } from '@prisma/client';
 import { PrismaService } from 'src/utilities/Prisma';
 import RequestCreateCollection from './schemas/create';
 import { RequestUpdateCollection } from './schemas/update';
@@ -14,15 +13,55 @@ export class CollectionsService {
   }
 
   public async getCollections() {
-    return (await this.prisma.collection.findMany()).map((collection) =>
-      this.getPublicFields(collection),
-    );
+    const collections = await this.prisma.collection.findMany({
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: { select: { accounts: true } },
+      },
+    });
+
+    return collections.map((collection) => ({
+      id: collection.id,
+      name: collection.name,
+      description: collection.description,
+      createdAt: collection.createdAt,
+      updatedAt: collection.updatedAt,
+      accountCount: collection._count.accounts,
+    }));
   }
 
   public async getCollection(id: string) {
-    return this.getPublicFields(
-      await this.prisma.collection.findUniqueOrThrow({ where: { id } }),
-    );
+    return await this.prisma.collection.findUniqueOrThrow({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        createdAt: true,
+        updatedAt: true,
+        accounts: {
+          select: {
+            id: true,
+            platform: true,
+            url: true,
+            note: true,
+            icon: true,
+            tags: {
+              select: {
+                id: true,
+                name: true,
+                color: true,
+                icon: true,
+              },
+            },
+          },
+        },
+      },
+    });
   }
 
   public async updateCollection(id: string, data: RequestUpdateCollection) {
@@ -33,11 +72,31 @@ export class CollectionsService {
     await this.prisma.collection.delete({ where: { id } });
   }
 
-  private getPublicFields(collection: Collection) {
-    return {
-      id: collection.id,
-      name: collection.name,
-      description: collection.description,
-    };
+  public async addAccountToCollection(collectionId: string, accountId: string) {
+    await this.prisma.collection.update({
+      where: { id: collectionId },
+      data: {
+        accounts: {
+          connect: { id: accountId },
+        },
+      },
+    });
+  }
+
+  public async removeAccountFromCollection(
+    collectionId: string,
+    accountId: string,
+  ) {
+    await this.prisma.collection.update({
+      where: { id: collectionId },
+      data: {
+        accounts: {
+          disconnect: { id: accountId },
+        },
+      },
+      include: {
+        accounts: true,
+      },
+    });
   }
 }

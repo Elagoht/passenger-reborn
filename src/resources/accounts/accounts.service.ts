@@ -153,6 +153,22 @@ export class AccountsService {
     await this.prisma.account.delete({ where: { id } });
   }
 
+  public async addTagToAccount(accountId: string, tagId: string) {
+    return this.prisma.account.update({
+      where: { id: accountId },
+      data: { tags: { connect: { id: tagId } } },
+      include: { tags: true },
+    });
+  }
+
+  public async removeTagFromAccount(accountId: string, tagId: string) {
+    return this.prisma.account.update({
+      where: { id: accountId },
+      data: { tags: { disconnect: { id: tagId } } },
+      include: { tags: true },
+    });
+  }
+
   private async shouldUpdateAccount(
     id: string,
     newPassphrase: string,

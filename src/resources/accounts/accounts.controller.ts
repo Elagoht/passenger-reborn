@@ -9,7 +9,12 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtGuard } from 'src/utilities/Guards/jwt.guard';
 import { AccountsService } from './accounts.service';
 import RequestCreateAccount from './schemas/requests/create';
@@ -17,15 +22,16 @@ import RequestUpdateAccount from './schemas/requests/update';
 
 @UseGuards(JwtGuard)
 @ApiBearerAuth()
+@ApiTags('accounts')
 @Controller('accounts')
 export class AccountsController {
-  constructor(private readonly accountsService: AccountsService) {}
+  public constructor(private readonly accountsService: AccountsService) {}
 
   @Get()
   @ApiOperation({
     summary: 'Get all accounts',
   })
-  async getAccounts() {
+  public async getAccounts() {
     return this.accountsService.getAccounts();
   }
 
@@ -33,7 +39,7 @@ export class AccountsController {
   @ApiOperation({
     summary: 'Get an account by ID and its history',
   })
-  async getAccountById(@Param('id') id: string) {
+  public async getAccountById(@Param('id') id: string) {
     return this.accountsService.getAccountById(id);
   }
 
@@ -41,7 +47,7 @@ export class AccountsController {
   @ApiOperation({
     summary: 'Create a new account',
   })
-  async createAccount(@Body() body: RequestCreateAccount) {
+  public async createAccount(@Body() body: RequestCreateAccount) {
     return this.accountsService.createAccount(body);
   }
 
@@ -49,7 +55,7 @@ export class AccountsController {
   @ApiOperation({
     summary: 'Update an account by ID',
   })
-  async updateAccount(
+  public async updateAccount(
     @Param('id') id: string,
     @Body() body: RequestUpdateAccount,
   ) {
@@ -61,7 +67,7 @@ export class AccountsController {
   @ApiOperation({
     summary: 'Delete an account by ID',
   })
-  async deleteAccount(@Param('id') id: string) {
+  public async deleteAccount(@Param('id') id: string) {
     return this.accountsService.deleteAccount(id);
   }
 
@@ -69,7 +75,29 @@ export class AccountsController {
   @ApiOperation({
     summary: 'Get accounts with similar passphrases by ID',
   })
-  async getSimilarAccounts(@Param('id') id: string) {
+  public async getSimilarAccounts(@Param('id') id: string) {
     return this.accountsService.getSimilarAccounts(id);
+  }
+
+  @Post(':id/tags/:tagId')
+  @ApiOperation({ summary: 'Add a tag to an account' })
+  @ApiParam({ name: 'id', description: 'Account ID' })
+  @ApiParam({ name: 'tagId', description: 'Tag ID' })
+  public async addTagToAccount(
+    @Param('id') id: string,
+    @Param('tagId') tagId: string,
+  ) {
+    return this.accountsService.addTagToAccount(id, tagId);
+  }
+
+  @Delete(':id/tags/:tagId')
+  @ApiOperation({ summary: 'Remove a tag from an account' })
+  @ApiParam({ name: 'id', description: 'Account ID' })
+  @ApiParam({ name: 'tagId', description: 'Tag ID' })
+  public async removeTagFromAccount(
+    @Param('id') id: string,
+    @Param('tagId') tagId: string,
+  ) {
+    return this.accountsService.removeTagFromAccount(id, tagId);
   }
 }
