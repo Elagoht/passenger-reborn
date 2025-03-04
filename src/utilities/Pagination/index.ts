@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client';
 
 class Pagination {
   private readonly page: number;
-  private readonly take: number;
+  private readonly take: number | undefined;
 
   public constructor(pagination: PaginationParams) {
     this.page = pagination.page;
@@ -11,7 +11,7 @@ class Pagination {
 
   public getQuery() {
     return {
-      skip: (this.page - 1) * this.take,
+      skip: (this.page - 1) * (this.take ?? 1),
       take: this.take,
     };
   }

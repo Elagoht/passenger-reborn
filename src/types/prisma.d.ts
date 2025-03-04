@@ -4,5 +4,5 @@ type PrismaErrorMap = Partial<
 
 interface PaginationParams {
   page: number;
-  take: number;
+  take: number | undefined;
 }
