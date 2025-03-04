@@ -17,6 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { ResponseId } from 'src/utilities/Common/schemas/id';
 import { PaginationQuery } from 'src/utilities/Decorators/pagination-query.decorator';
 import { Pagination } from 'src/utilities/Decorators/pagination.decorator';
 import { JwtGuard } from 'src/utilities/Guards/jwt.guard';
@@ -53,14 +54,14 @@ export class AccountsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new account' })
-  @ApiResponse({ type: ResponseAccountDetails })
+  @ApiResponse({ type: ResponseId })
   public async createAccount(@Body() body: RequestCreateAccount) {
     return this.accountsService.createAccount(body);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update an account by ID' })
-  @ApiResponse({ type: ResponseAccountDetails })
+  @ApiResponse({ type: ResponseId })
   public async updateAccount(
     @Param('id') id: string,
     @Body() body: RequestUpdateAccount,

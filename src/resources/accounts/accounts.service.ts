@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ResponseId } from 'src/utilities/Common/schemas/id';
 import { CryptoService } from 'src/utilities/Crypto';
 import Pagination from 'src/utilities/Pagination';
 import { PrismaService } from 'src/utilities/Prisma';
@@ -42,9 +43,7 @@ export class AccountsService {
     });
   }
 
-  public async createAccount(
-    body: RequestCreateAccount,
-  ): Promise<ResponseAccountDetails> {
+  public async createAccount(body: RequestCreateAccount): Promise<ResponseId> {
     return await this.prisma.account.create({
       data: {
         passphrase: this.crypto.encrypt(body.passphrase),
@@ -57,17 +56,14 @@ export class AccountsService {
           create: { strength: Strength.evaluate(body.passphrase).score },
         },
       },
-      select: {
-        ...this.selectStandardFields(),
-        ...this.selectHistoryFields(),
-      },
+      select: { id: true },
     });
   }
 
   public async updateAccount(
     id: string,
     body: RequestUpdateAccount,
-  ): Promise<ResponseAccountDetails> {
+  ): Promise<ResponseId> {
     // If the passphrase is not provided, we can just update the account
     if (!body.passphrase) {
       return this.prisma.account.update({
@@ -78,10 +74,7 @@ export class AccountsService {
           note: body.note,
           icon: body.icon,
         },
-        select: {
-          ...this.selectStandardFields(),
-          ...this.selectHistoryFields(),
-        },
+        select: { id: true },
       });
     }
 
