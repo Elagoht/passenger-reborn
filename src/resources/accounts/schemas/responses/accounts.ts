@@ -46,6 +46,11 @@ export class ResponseAccountItem {
 }
 
 export class ResponseAccountDetails extends ResponseAccountItem {
-  @ApiProperty()
+  @ApiProperty({ type: [PassphraseHistoryItem] })
   history: PassphraseHistoryItem[];
+}
+
+export class ResponseAccountSimilar extends ResponseAccountItem {
+  @ApiProperty()
+  distance: number;
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CryptoService } from 'src/utilities/Crypto';
 import Pagination from 'src/utilities/Pagination';
 import { PrismaService } from 'src/utilities/Prisma';
@@ -8,6 +8,7 @@ import RequestUpdateAccount from './schemas/requests/update';
 import {
   ResponseAccountDetails,
   ResponseAccountItem,
+  ResponseAccountSimilar,
 } from './schemas/responses/accounts';
 
 @Injectable()
@@ -36,32 +37,37 @@ export class AccountsService {
       where: { id },
       select: {
         ...this.selectStandardFields(),
-        history: {
-          select: { strength: true, createdAt: true, deletedAt: true },
-        },
+        ...this.selectHistoryFields(),
       },
     });
   }
 
-  public async createAccount(body: RequestCreateAccount) {
-    const strength = Strength.evaluate(body.passphrase).score;
-    const encryptedPassphrase = this.crypto.encrypt(body.passphrase);
-    const simHash = this.crypto.generateSimhash(body.passphrase);
-
-    return this.prisma.account.create({
+  public async createAccount(
+    body: RequestCreateAccount,
+  ): Promise<ResponseAccountDetails> {
+    return await this.prisma.account.create({
       data: {
-        passphrase: encryptedPassphrase,
-        simHash,
+        passphrase: this.crypto.encrypt(body.passphrase),
+        simHash: this.crypto.generateSimhash(body.passphrase),
         platform: body.platform,
         url: body.url,
         note: body.note,
         icon: body.icon,
-        history: { create: { strength } },
+        history: {
+          create: { strength: Strength.evaluate(body.passphrase).score },
+        },
+      },
+      select: {
+        ...this.selectStandardFields(),
+        ...this.selectHistoryFields(),
       },
     });
   }
 
-  public async updateAccount(id: string, body: RequestUpdateAccount) {
+  public async updateAccount(
+    id: string,
+    body: RequestUpdateAccount,
+  ): Promise<ResponseAccountDetails> {
     // If the passphrase is not provided, we can just update the account
     if (!body.passphrase) {
       return this.prisma.account.update({
@@ -71,6 +77,10 @@ export class AccountsService {
           url: body.url,
           note: body.note,
           icon: body.icon,
+        },
+        select: {
+          ...this.selectStandardFields(),
+          ...this.selectHistoryFields(),
         },
       });
     }
@@ -84,34 +94,38 @@ export class AccountsService {
     return this.prisma.account.update({
       where: { id },
       data: { platform: body.platform, note: body.note, icon: body.icon },
+      select: {
+        ...this.selectStandardFields(),
+        ...this.selectHistoryFields(),
+      },
     });
   }
 
   public async getSimilarAccounts(
     id: string,
     threshold = AccountsService.DEFAULT_SIMILARITY_THRESHOLD,
-  ) {
-    const targetPassphrase = await this.prisma.account.findUnique({
+  ): Promise<ResponseAccountSimilar[]> {
+    const targetPassphrase = await this.prisma.account.findUniqueOrThrow({
       where: { id },
       select: { simHash: true },
     });
 
-    if (!targetPassphrase) {
-      throw new NotFoundException('Account not found');
-    }
-
     const allAccounts = await this.prisma.account.findMany({
       where: { id: { not: id } },
+      select: {
+        simHash: true,
+        ...this.selectStandardFields(),
+        ...this.selectHistoryFields(),
+      },
     });
 
     return allAccounts
       .map((entry) => ({
-        ...entry,
-        passphrase: this.crypto.decrypt(entry.passphrase),
         distance: this.crypto.calculateSimhashDistance(
-          entry.simHash,
           targetPassphrase.simHash,
+          entry.simHash,
         ),
+        ...entry,
       }))
       .filter((entry) => entry.distance <= threshold);
   }
@@ -170,6 +184,18 @@ export class AccountsService {
     };
   }
 
+  private selectHistoryFields() {
+    return {
+      history: {
+        select: {
+          strength: true,
+          createdAt: true,
+          deletedAt: true,
+        },
+      },
+    };
+  }
+
   private async updateAccountWithNewPassphrase(
     id: string,
     passphrase: string,
@@ -186,6 +212,10 @@ export class AccountsService {
         history: {
           create: { strength: Strength.evaluate(passphrase).score },
         },
+      },
+      select: {
+        ...this.selectStandardFields(),
+        ...this.selectHistoryFields(),
       },
     });
   }

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -22,7 +23,11 @@ import { JwtGuard } from 'src/utilities/Guards/jwt.guard';
 import { AccountsService } from './accounts.service';
 import RequestCreateAccount from './schemas/requests/create';
 import RequestUpdateAccount from './schemas/requests/update';
-import { ResponseAccountItem } from './schemas/responses/accounts';
+import {
+  ResponseAccountDetails,
+  ResponseAccountItem,
+  ResponseAccountSimilar,
+} from './schemas/responses/accounts';
 
 @UseGuards(JwtGuard)
 @ApiBearerAuth()
@@ -40,25 +45,22 @@ export class AccountsController {
   }
 
   @Get(':id')
-  @ApiOperation({
-    summary: 'Get an account by ID and its history',
-  })
+  @ApiOperation({ summary: 'Get an account by ID and its history' })
+  @ApiResponse({ type: ResponseAccountDetails })
   public async getAccountById(@Param('id') id: string) {
     return this.accountsService.getAccountById(id);
   }
 
   @Post()
-  @ApiOperation({
-    summary: 'Create a new account',
-  })
+  @ApiOperation({ summary: 'Create a new account' })
+  @ApiResponse({ type: ResponseAccountDetails })
   public async createAccount(@Body() body: RequestCreateAccount) {
     return this.accountsService.createAccount(body);
   }
 
   @Patch(':id')
-  @ApiOperation({
-    summary: 'Update an account by ID',
-  })
+  @ApiOperation({ summary: 'Update an account by ID' })
+  @ApiResponse({ type: ResponseAccountDetails })
   public async updateAccount(
     @Param('id') id: string,
     @Body() body: RequestUpdateAccount,
@@ -68,17 +70,15 @@ export class AccountsController {
 
   @Delete(':id')
   @HttpCode(204)
-  @ApiOperation({
-    summary: 'Delete an account by ID',
-  })
+  @ApiOperation({ summary: 'Delete an account by ID' })
+  @HttpCode(HttpStatus.NO_CONTENT)
   public async deleteAccount(@Param('id') id: string) {
     return this.accountsService.deleteAccount(id);
   }
 
   @Get(':id/similar-passphrases')
-  @ApiOperation({
-    summary: 'Get accounts with similar passphrases by ID',
-  })
+  @ApiOperation({ summary: 'Get accounts with similar passphrases by ID' })
+  @ApiResponse({ type: [ResponseAccountSimilar] })
   public async getSimilarAccounts(@Param('id') id: string) {
     return this.accountsService.getSimilarAccounts(id);
   }
@@ -87,6 +87,7 @@ export class AccountsController {
   @ApiOperation({ summary: 'Add a tag to an account' })
   @ApiParam({ name: 'id', description: 'Account ID' })
   @ApiParam({ name: 'tagId', description: 'Tag ID' })
+  @HttpCode(200)
   public async addTagToAccount(
     @Param('id') id: string,
     @Param('tagId') tagId: string,
