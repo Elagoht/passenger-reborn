@@ -1,11 +1,6 @@
 import { UseInterceptors, applyDecorators } from '@nestjs/common';
 import { createPrismaErrorInterceptor } from '../Interceptors/custom-prisma-error.interceptor';
 
-// Type for the error code mapping
-export type PrismaErrorMap = Partial<
-  Record<string, string | ((error: any) => string)>
->;
-
 /**
  * Decorator for handling Prisma errors with custom messages
  *

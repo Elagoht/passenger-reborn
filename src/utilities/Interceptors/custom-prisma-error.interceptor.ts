@@ -1,7 +1,6 @@
 import { CallHandler, ExecutionContext } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { Observable, catchError } from 'rxjs';
-import { PrismaErrorMap } from '../Decorators/prisma-error.decorator';
 
 /**
  * Creates a custom interceptor for handling Prisma errors with custom messages
