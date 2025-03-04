@@ -53,7 +53,13 @@ export class CryptoService {
   }
 
   encrypt(text: string): string {
-    const initializationVector = crypto.randomBytes(CryptoService.IV_LENGTH);
+    // Generate deterministic IV by hashing the input text
+    const hash = crypto.createHash('sha256').update(text).digest();
+    const initializationVector = Buffer.from(hash).subarray(
+      0,
+      CryptoService.IV_LENGTH,
+    );
+
     const cipher = crypto.createCipheriv(
       CryptoService.ALGORITHM,
       this.key,
