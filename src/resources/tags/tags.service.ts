@@ -27,12 +27,8 @@ export class TagsService {
     );
   }
 
-  public async updateTag(
-    id: string,
-    data: RequestUpdateTag,
-  ): Promise<ResponseId> {
+  public async updateTag(id: string, data: RequestUpdateTag): Promise<void> {
     await this.prisma.tag.update({ where: { id }, data });
-    return { id };
   }
 
   public async deleteTag(id: string): Promise<void> {

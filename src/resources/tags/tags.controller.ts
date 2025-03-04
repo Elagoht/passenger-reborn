@@ -37,6 +37,7 @@ export class TagsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a tag by id' })
+  @ApiResponse({ type: ResponseTag })
   public getTag(@Param('id') id: string) {
     return this.tagsService.getTag(id);
   }
