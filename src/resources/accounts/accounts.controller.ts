@@ -61,7 +61,6 @@ export class AccountsController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update an account by ID' })
-  @ApiResponse({ type: ResponseId })
   public async updateAccount(
     @Param('id') id: string,
     @Body() body: RequestUpdateAccount,

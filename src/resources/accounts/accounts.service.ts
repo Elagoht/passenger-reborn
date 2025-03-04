@@ -63,10 +63,10 @@ export class AccountsService {
   public async updateAccount(
     id: string,
     body: RequestUpdateAccount,
-  ): Promise<ResponseId> {
+  ): Promise<void> {
     // If the passphrase is not provided, we can just update the account
     if (!body.passphrase) {
-      return this.prisma.account.update({
+      await this.prisma.account.update({
         where: { id },
         data: {
           platform: body.platform,
@@ -74,23 +74,20 @@ export class AccountsService {
           note: body.note,
           icon: body.icon,
         },
-        select: { id: true },
       });
+      return;
     }
 
     // If the passphrase has changed, we need to update the account
     if (await this.shouldUpdateHistory(id, body.passphrase)) {
       await this.updateAccountWithNewPassphrase(id, body.passphrase, body);
+      return;
     }
 
     // Otherwise, we just update the account
-    return this.prisma.account.update({
+    await this.prisma.account.update({
       where: { id },
       data: { platform: body.platform, note: body.note, icon: body.icon },
-      select: {
-        ...this.selectStandardFields(),
-        ...this.selectHistoryFields(),
-      },
     });
   }
 
@@ -194,7 +191,7 @@ export class AccountsService {
     passphrase: string,
     body: RequestUpdateAccount,
   ) {
-    return this.prisma.account.update({
+    await this.prisma.account.update({
       where: { id },
       data: {
         passphrase: this.crypto.encrypt(passphrase),
@@ -205,10 +202,6 @@ export class AccountsService {
         history: {
           create: { strength: Strength.evaluate(passphrase).score },
         },
-      },
-      select: {
-        ...this.selectStandardFields(),
-        ...this.selectHistoryFields(),
       },
     });
   }

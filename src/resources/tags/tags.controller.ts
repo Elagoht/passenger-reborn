@@ -9,9 +9,11 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation } from '@nestjs/swagger';
-import RequestCreateTag from './schemas/create';
-import { RequestUpdateTag } from './schemas/update';
+import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ResponseId } from 'src/utilities/Common/schemas/id';
+import RequestCreateTag from './schemas/request/create';
+import { RequestUpdateTag } from './schemas/request/update';
+import { ResponseTag } from './schemas/responses/request';
 import { TagsService } from './tags.service';
 
 @Controller('tags')
@@ -20,12 +22,15 @@ export class TagsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new tag' })
+  @ApiBody({ type: RequestCreateTag })
+  @ApiResponse({ type: ResponseId })
   public createTag(@Body() data: RequestCreateTag) {
     return this.tagsService.createTag(data);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all tags' })
+  @ApiResponse({ type: [ResponseTag] })
   public getTags() {
     return this.tagsService.getTags();
   }
