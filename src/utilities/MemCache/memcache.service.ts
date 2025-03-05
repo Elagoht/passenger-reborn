@@ -1,7 +1,6 @@
-import { Global, Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../Prisma/prisma.service';
 
-@Global()
 @Injectable()
 export class MemCacheService implements OnModuleInit {
   private readonly cache: MemCache;

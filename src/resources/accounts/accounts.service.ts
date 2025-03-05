@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ResponseId } from 'src/utilities/Common/schemas/id';
 import { CryptoService } from 'src/utilities/Crypto/crypto.service';
 import { GraphCacheService } from 'src/utilities/GraphCache/graph-cache.service';
+import { MemCacheService } from 'src/utilities/MemCache/memcache.service';
 import Pagination from 'src/utilities/Pagination';
 import { PrismaService } from 'src/utilities/Prisma/prisma.service';
 import { Strength } from 'src/utilities/Strength';
@@ -21,6 +22,7 @@ export class AccountsService {
     private readonly prisma: PrismaService,
     private readonly crypto: CryptoService,
     private readonly graphCache: GraphCacheService,
+    private readonly memCache: MemCacheService,
   ) {}
 
   public async getAccounts(
@@ -28,18 +30,34 @@ export class AccountsService {
   ): Promise<ResponseAccountItem[]> {
     const pagination = new Pagination(paginationParams);
 
-    return await this.prisma.account.findMany({
+    const accounts = await this.prisma.account.findMany({
       ...pagination.getQuery(),
       ...pagination.sortOldestAdded(),
       select: this.selectStandardFields(),
     });
+
+    return accounts.map((account) => ({
+      ...account,
+      tags: account.tags.map((tag) => ({
+        ...tag,
+        isPanic: tag.id === this.memCache.get('panicTagId') ? true : undefined,
+      })),
+    }));
   }
 
   public async getAccountById(id: string): Promise<ResponseAccountItem> {
-    return await this.prisma.account.findUniqueOrThrow({
+    const account = await this.prisma.account.findUniqueOrThrow({
       where: { id },
       select: this.selectStandardFields(),
     });
+
+    return {
+      ...account,
+      tags: account.tags.map((tag) => ({
+        ...tag,
+        isPanic: tag.id === this.memCache.get('panicTagId') ? true : undefined,
+      })),
+    };
   }
 
   public async createAccount(body: RequestCreateAccount): Promise<ResponseId> {
@@ -120,7 +138,7 @@ export class AccountsService {
       select: { simHash: true, ...this.selectStandardFields() },
     });
 
-    return allAccounts
+    const similarAccounts = allAccounts
       .map((entry) => ({
         distance: this.crypto.calculateSimhashDistance(
           targetPassphrase.simHash,
@@ -129,6 +147,14 @@ export class AccountsService {
         ...entry,
       }))
       .filter((entry) => entry.distance <= threshold);
+
+    return similarAccounts.map((account) => ({
+      ...account,
+      tags: account.tags.map((tag) => ({
+        ...tag,
+        isPanic: tag.id === this.memCache.get('panicTagId') ? true : undefined,
+      })),
+    }));
   }
 
   public async deleteAccount(id: string): Promise<void> {

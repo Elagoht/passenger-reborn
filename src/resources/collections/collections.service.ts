@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ResponseId } from 'src/utilities/Common/schemas/id';
+import { MemCacheService } from 'src/utilities/MemCache/memcache.service';
 import { PrismaService } from 'src/utilities/Prisma/prisma.service';
 import { RequestCreateCollection } from './schemas/requests/create';
 import { RequestUpdateCollection } from './schemas/requests/update';
@@ -7,7 +8,10 @@ import { ResponseCollection } from './schemas/responses/collections';
 
 @Injectable()
 export class CollectionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly memCache: MemCacheService,
+  ) {}
 
   public async createCollection(
     data: RequestCreateCollection,
@@ -39,7 +43,7 @@ export class CollectionsService {
   }
 
   public async getCollection(id: string): Promise<ResponseCollection> {
-    return await this.prisma.collection.findUniqueOrThrow({
+    const collection = await this.prisma.collection.findUniqueOrThrow({
       where: { id },
       select: {
         id: true,
@@ -59,6 +63,18 @@ export class CollectionsService {
         },
       },
     });
+
+    return {
+      ...collection,
+      accounts: collection.accounts.map((account) => ({
+        ...account,
+        tags: account.tags.map((tag) => ({
+          ...tag,
+          isPanic:
+            tag.id === this.memCache.get('panicTagId') ? true : undefined,
+        })),
+      })),
+    };
   }
 
   public async updateCollection(

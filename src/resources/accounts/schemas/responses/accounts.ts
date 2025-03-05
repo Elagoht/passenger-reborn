@@ -12,6 +12,9 @@ class TagBadgeItem {
 
   @ApiProperty()
   color: string;
+
+  @ApiProperty({ type: Boolean, nullable: true })
+  isPanic: boolean | undefined;
 }
 
 export class ResponseAccountItem {
