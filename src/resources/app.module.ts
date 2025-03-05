@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CryptoModule } from 'src/utilities/Crypto/crypto.module';
 import { GraphCacheModule } from 'src/utilities/GraphCache/graph-cache.module';
+import { MemCacheModule } from 'src/utilities/MemCache/memcache.module';
 import { PrismaModule } from 'src/utilities/Prisma/prisma.module';
 import { AccountsModule } from './accounts/accounts.module';
 import { AuthModule } from './auth/auth.module';
@@ -17,6 +18,7 @@ import { TagsModule } from './tags/tags.module';
     CryptoModule,
     GenerateModule,
     GraphCacheModule,
+    MemCacheModule,
     PrismaModule,
     StatsModule,
     TagsModule,
