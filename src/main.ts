@@ -1,8 +1,8 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { PrismaErrorInterceptor } from './interceptors/prisma-error.interceptor';
+import validationPipe from './pipes/validation';
+import { AppModule } from './resources/app.module';
 import Environment from './utilities/Environment';
-import { PrismaErrorInterceptor } from './utilities/Interceptors/prisma-error.interceptor';
-import validationPipe from './utilities/Pipes/validation';
 import { createSwaggerConfig } from './utilities/Swagger';
 
 async function bootstrap() {

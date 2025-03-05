@@ -18,8 +18,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { JwtGuard } from 'src/guards/jwt.guard';
 import { ResponseId } from 'src/utilities/Common/schemas/id';
-import { JwtGuard } from 'src/utilities/Guards/jwt.guard';
 import { CollectionsService } from './collections.service';
 import { RequestCreateCollection } from './schemas/requests/create';
 import { RequestUpdateCollection } from './schemas/requests/update';

@@ -1,6 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { PrismaModule } from '../Prisma/prisma.module';
-import { GraphCacheService } from './index';
+import { GraphCacheService } from './graph-cache.service';
 
 @Global()
 @Module({

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
-import { IsMasterPassphrase } from 'src/utilities/Decorators/validation';
+import { IsMasterPassphrase } from 'src/decorators/validation';
 
 class RequestInitialize {
   @ApiProperty({

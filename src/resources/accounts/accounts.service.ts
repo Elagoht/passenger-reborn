@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ResponseId } from 'src/utilities/Common/schemas/id';
-import { CryptoService } from 'src/utilities/Crypto';
-import { GraphCacheService } from 'src/utilities/GraphCache';
+import { CryptoService } from 'src/utilities/Crypto/crypto.service';
+import { GraphCacheService } from 'src/utilities/GraphCache/graph-cache.service';
 import Pagination from 'src/utilities/Pagination';
-import { PrismaService } from 'src/utilities/Prisma';
+import { PrismaService } from 'src/utilities/Prisma/prisma.service';
 import { Strength } from 'src/utilities/Strength';
 import RequestCreateAccount from './schemas/requests/create';
 import RequestUpdateAccount from './schemas/requests/update';

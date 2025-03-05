@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { IsMasterPassphrase } from 'src/utilities/Decorators/validation';
+import { IsMasterPassphrase } from 'src/decorators/validation';
 
 export class RequestChangePassphrase {
   @IsString()

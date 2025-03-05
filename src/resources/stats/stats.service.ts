@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { GraphCacheService } from 'src/utilities/GraphCache';
-import { PrismaService } from 'src/utilities/Prisma';
+import { GraphCacheService } from 'src/utilities/GraphCache/graph-cache.service';
+import { PrismaService } from 'src/utilities/Prisma/prisma.service';
 import { ResponseStrengthGraphEntry } from './schemas/responses/strength-by-day';
 
 @Injectable()
@@ -15,14 +15,7 @@ export class StatsService {
   ): Promise<ResponseStrengthGraphEntry[]> {
     const accountHistories = await this.prisma.account.findUniqueOrThrow({
       where: { id: accountId },
-      select: {
-        history: {
-          select: {
-            strength: true,
-            createdAt: true,
-          },
-        },
-      },
+      select: { history: { select: { strength: true, createdAt: true } } },
     });
 
     return accountHistories.history.map((history) => ({

@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
-import { CryptoService } from 'src/utilities/Crypto';
-import { StatsModule } from '../stats/stats.module';
+import { CryptoModule } from 'src/utilities/Crypto/crypto.module';
 import { AccountsController } from './accounts.controller';
 import { AccountsService } from './accounts.service';
 
 @Module({
-  imports: [StatsModule],
+  imports: [CryptoModule],
   controllers: [AccountsController],
-  providers: [AccountsService, CryptoService],
+  providers: [AccountsService],
 })
 export class AccountsModule {}

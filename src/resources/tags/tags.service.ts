@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Tag } from '@prisma/client';
 import { ResponseId } from 'src/utilities/Common/schemas/id';
-import { PrismaService } from 'src/utilities/Prisma';
+import { PrismaService } from 'src/utilities/Prisma/prisma.service';
 import RequestCreateTag from './schemas/request/create';
 import { RequestUpdateTag } from './schemas/request/update';
 import { ResponseTag } from './schemas/responses/request';

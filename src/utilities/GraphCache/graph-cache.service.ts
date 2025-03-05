@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ResponseStrengthGraphEntry } from 'src/resources/stats/schemas/responses/strength-by-day';
-import { PrismaService } from '../Prisma';
+import { PrismaService } from '../Prisma/prisma.service';
 
 @Injectable()
 export class GraphCacheService {

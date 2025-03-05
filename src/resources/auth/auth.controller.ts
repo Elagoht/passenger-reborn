@@ -14,7 +14,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtGuard } from 'src/utilities/Guards/jwt.guard';
+import { JwtGuard } from 'src/guards/jwt.guard';
 import { AuthService } from './auth.service';
 import { RequestChangePassphrase } from './schemas/requests/change';
 import RequestInitialize from './schemas/requests/initialize';

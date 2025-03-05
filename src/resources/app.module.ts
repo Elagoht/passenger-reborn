@@ -1,0 +1,27 @@
+import { Module } from '@nestjs/common';
+import { CryptoModule } from 'src/utilities/Crypto/crypto.module';
+import { GraphCacheModule } from 'src/utilities/GraphCache/graph-cache.module';
+import { PrismaModule } from 'src/utilities/Prisma/prisma.module';
+import { AccountsModule } from './accounts/accounts.module';
+import { AuthModule } from './auth/auth.module';
+import { CollectionsModule } from './collections/collections.module';
+import { GenerateModule } from './generate/generate.module';
+import { StatsModule } from './stats/stats.module';
+import { TagsModule } from './tags/tags.module';
+
+@Module({
+  imports: [
+    AuthModule,
+    AccountsModule,
+    CollectionsModule,
+    CryptoModule,
+    GenerateModule,
+    GraphCacheModule,
+    PrismaModule,
+    StatsModule,
+    TagsModule,
+  ],
+  controllers: [],
+  providers: [],
+})
+export class AppModule {}

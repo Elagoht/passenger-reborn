@@ -1,5 +1,5 @@
 import { UseInterceptors, applyDecorators } from '@nestjs/common';
-import { createPrismaErrorInterceptor } from '../Interceptors/custom-prisma-error.interceptor';
+import { createPrismaErrorInterceptor } from '../interceptors/custom-prisma-error.interceptor';
 
 /**
  * Decorator for handling Prisma errors with custom messages

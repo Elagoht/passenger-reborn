@@ -5,7 +5,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtGuard } from 'src/utilities/Guards/jwt.guard';
+import { JwtGuard } from 'src/guards/jwt.guard';
 import { ResponseStrengthGraphEntry } from './schemas/responses/strength-by-day';
 import { StatsService } from './stats.service';
 

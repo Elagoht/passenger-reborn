@@ -17,10 +17,10 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { PaginationQuery } from 'src/decorators/pagination-query.decorator';
+import { Pagination } from 'src/decorators/pagination.decorator';
+import { JwtGuard } from 'src/guards/jwt.guard';
 import { ResponseId } from 'src/utilities/Common/schemas/id';
-import { PaginationQuery } from 'src/utilities/Decorators/pagination-query.decorator';
-import { Pagination } from 'src/utilities/Decorators/pagination.decorator';
-import { JwtGuard } from 'src/utilities/Guards/jwt.guard';
 import { AccountsService } from './accounts.service';
 import RequestCreateAccount from './schemas/requests/create';
 import RequestUpdateAccount from './schemas/requests/update';

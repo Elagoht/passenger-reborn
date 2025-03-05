@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ResponseId } from 'src/utilities/Common/schemas/id';
-import { PrismaService } from 'src/utilities/Prisma';
+import { PrismaService } from 'src/utilities/Prisma/prisma.service';
 import { RequestCreateCollection } from './schemas/requests/create';
 import { RequestUpdateCollection } from './schemas/requests/update';
 import { ResponseCollection } from './schemas/responses/collections';
