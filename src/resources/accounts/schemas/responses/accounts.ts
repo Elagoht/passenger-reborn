@@ -1,16 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-class PassphraseHistoryItem {
-  @ApiProperty()
-  strength: number;
-
-  @ApiProperty()
-  createdAt: Date;
-
-  @ApiProperty()
-  deletedAt: Date | null;
-}
-
 class TagBadgeItem {
   @ApiProperty()
   id: string;
