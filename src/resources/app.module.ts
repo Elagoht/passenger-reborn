@@ -7,6 +7,7 @@ import { AccountsModule } from './accounts/accounts.module';
 import { AuthModule } from './auth/auth.module';
 import { CollectionsModule } from './collections/collections.module';
 import { GenerateModule } from './generate/generate.module';
+import { LeaksModule } from './leaks/leaks.module';
 import { PanicModule } from './panic/panic.module';
 import { StatsModule } from './stats/stats.module';
 import { TagsModule } from './tags/tags.module';
@@ -19,6 +20,7 @@ import { TagsModule } from './tags/tags.module';
     CryptoModule,
     GenerateModule,
     GraphCacheModule,
+    LeaksModule,
     MemCacheModule,
     PanicModule,
     PrismaModule,
