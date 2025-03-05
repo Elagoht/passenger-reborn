@@ -50,7 +50,7 @@ model PassphraseHistory {
   deletedAt DateTime?
 
   accountId String?
-  account   Account? @relation("PassphraseHistory", fields: [accountId], references: [id], onDelete: Cascade)
+  account   Account? @relation("PassphraseHistory", fields: [accountId], references: [id], onDelete: SetNull)
 }
 
 model Collection {
