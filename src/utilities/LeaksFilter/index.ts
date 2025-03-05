@@ -1,3 +1,8 @@
+import {
+  LeakFilterDto,
+  SortField,
+  SortOrder,
+} from 'src/resources/leaks/schemas/requests/filter';
 import Pagination from '../Pagination';
 import Reporter from '../Reporter';
 
@@ -11,39 +16,35 @@ export class LeaksFilter {
     this.filteredLeaks = Array.from(this.leaksDB.values());
   }
 
-  public filter(query: Record<string, string>): this {
-    if (Object.keys(query).length === 0) {
-      return this;
-    }
-
+  public filter(filterDto: LeakFilterDto): this {
     // Filter by name (fuzzy search)
-    if (query.name) {
-      const searchTerm = query.name.toLowerCase();
+    if (filterDto.name) {
+      const searchTerm = filterDto.name.toLowerCase();
       this.filteredLeaks = this.filteredLeaks.filter((leak) =>
         this.fuzzyMatch(leak.name, searchTerm),
       );
     }
 
     // Filter by title (fuzzy search)
-    if (query.title) {
-      const searchTerm = query.title.toLowerCase();
+    if (filterDto.title) {
+      const searchTerm = filterDto.title.toLowerCase();
       this.filteredLeaks = this.filteredLeaks.filter((leak) =>
         this.fuzzyMatch(leak.title, searchTerm),
       );
     }
 
     // Filter by domain (fuzzy search)
-    if (query.domain) {
-      const searchTerm = query.domain.toLowerCase();
+    if (filterDto.domain) {
+      const searchTerm = filterDto.domain.toLowerCase();
       this.filteredLeaks = this.filteredLeaks.filter((leak) =>
         this.fuzzyMatch(leak.domain, searchTerm),
       );
     }
 
     // Filter by date range
-    if (query.date || query.dateTo) {
-      const fromDate = query.date ? new Date(query.date) : new Date(0);
-      const toDate = query.dateTo ? new Date(query.dateTo) : new Date();
+    if (filterDto.date || filterDto.dateTo) {
+      const fromDate = filterDto.date || new Date(0);
+      const toDate = filterDto.dateTo || new Date();
 
       this.filteredLeaks = this.filteredLeaks.filter((leak) => {
         const leakDate = new Date(leak.date);
@@ -52,11 +53,16 @@ export class LeaksFilter {
     }
 
     // Filter by pwnCount range
-    if (query.pwnCount || query.pwnCountTo) {
-      const minCount = query.pwnCount ? parseInt(query.pwnCount, 10) : 0;
-      const maxCount = query.pwnCountTo
-        ? parseInt(query.pwnCountTo, 10)
-        : Number.MAX_SAFE_INTEGER;
+    if (
+      filterDto.pwnCount !== undefined ||
+      filterDto.pwnCountTo !== undefined
+    ) {
+      const minCount =
+        filterDto.pwnCount !== undefined ? filterDto.pwnCount : 0;
+      const maxCount =
+        filterDto.pwnCountTo !== undefined
+          ? filterDto.pwnCountTo
+          : Number.MAX_SAFE_INTEGER;
 
       this.filteredLeaks = this.filteredLeaks.filter(
         (leak) => leak.pwnCount >= minCount && leak.pwnCount <= maxCount,
@@ -64,36 +70,35 @@ export class LeaksFilter {
     }
 
     // Filter by verified status
-    if (query.verified !== undefined) {
-      const isVerified = query.verified.toLowerCase() === 'true';
+    if (filterDto.verified !== undefined) {
       this.filteredLeaks = this.filteredLeaks.filter(
-        (leak) => leak.verified === isVerified,
+        (leak) => leak.verified === filterDto.verified,
       );
     }
 
     return this;
   }
 
-  public sort(query: Record<string, string>): this {
-    if (!query.sortBy) {
+  public sort(filterDto: LeakFilterDto): this {
+    if (!filterDto.sortBy) {
       return this;
     }
 
-    const sortField = query.sortBy as keyof HIBPLeakListItem;
-    const sortOrder = query.sortOrder?.toLowerCase() === 'desc' ? -1 : 1;
+    const sortField = filterDto.sortBy;
+    const sortOrder = filterDto.sortOrder === SortOrder.DESC ? -1 : 1;
 
     this.filteredLeaks.sort((a, b) => {
-      if (sortField === 'date') {
+      if (sortField === SortField.DATE) {
         return (
           sortOrder * (new Date(a.date).getTime() - new Date(b.date).getTime())
         );
       }
 
-      if (sortField === 'pwnCount') {
+      if (sortField === SortField.PWN_COUNT) {
         return sortOrder * (a.pwnCount - b.pwnCount);
       }
 
-      if (sortField === 'verified') {
+      if (sortField === SortField.VERIFIED) {
         return (
           sortOrder * (a.verified === b.verified ? 0 : a.verified ? 1 : -1)
         );

@@ -1,10 +1,22 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiQuery, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiExtraModels,
+  ApiQuery,
+  ApiResponse,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import { PaginationQuery } from 'src/decorators/pagination-query.decorator';
+import {
+  LeakFilterDto,
+  SortField,
+  SortOrder,
+} from 'src/resources/leaks/schemas/requests/filter';
+import ResponseLeakResults from 'src/resources/leaks/schemas/responses/results';
 
 export const ApiLeaksFilter = () => {
   return applyDecorators(
     PaginationQuery(),
+    ApiExtraModels(LeakFilterDto, ResponseLeakResults),
     ApiQuery({
       name: 'name',
       required: false,
@@ -36,35 +48,38 @@ export const ApiLeaksFilter = () => {
       name: 'pwnCount',
       required: false,
       description: 'Filter by minimum affected accounts',
-      type: 'number',
+      type: Number,
     }),
     ApiQuery({
       name: 'pwnCountTo',
       required: false,
       description: 'Filter by maximum affected accounts',
-      type: 'number',
+      type: Number,
     }),
     ApiQuery({
       name: 'verified',
       required: false,
       description: 'Filter by verification status',
-      type: 'boolean',
+      type: Boolean,
     }),
     ApiQuery({
       name: 'sortBy',
       required: false,
-      enum: ['name', 'title', 'domain', 'date', 'pwnCount', 'verified'],
+      enum: SortField,
       description: 'Sort fields',
     }),
     ApiQuery({
       name: 'sortOrder',
       required: false,
-      enum: ['asc', 'desc'],
+      enum: SortOrder,
       description: 'Sort order',
     }),
     ApiResponse({
       status: 200,
       description: 'Returns filtered and paginated data breaches',
+      schema: {
+        allOf: [{ $ref: getSchemaPath(ResponseLeakResults) }],
+      },
     }),
   );
 };

@@ -7,6 +7,7 @@ import {
 import { randomUUID } from 'crypto';
 import { LeaksFilter } from 'src/utilities/LeaksFilter';
 import { MemCacheService } from 'src/utilities/MemCache/memcache.service';
+import { LeakFilterDto } from './schemas/requests/filter';
 import ResponseLeakResults, { ResponseLeak } from './schemas/responses/results';
 
 @Injectable()
@@ -20,10 +21,10 @@ export class LeaksService implements OnModuleInit {
   }
 
   public async getLeaks(
-    query: Record<string, string>,
+    filterDto: LeakFilterDto,
     paginationParams: PaginationParams,
   ): Promise<ResponseLeakResults> {
-    const leaks = await this.findLeaks(query, paginationParams);
+    const leaks = await this.findLeaks(filterDto, paginationParams);
     return this.prepareResponse(leaks, paginationParams);
   }
 
@@ -47,25 +48,26 @@ export class LeaksService implements OnModuleInit {
   }
 
   private async findLeaks(
-    query: Record<string, string>,
+    filterDto: LeakFilterDto,
     paginationParams: PaginationParams,
   ): Promise<HIBPLeakListItem[]> {
     const leaksDB = await this.getAllLeaks();
 
     // Use the LeaksFilter utility to filter, sort, and paginate
     const leaksFilter = new LeaksFilter(leaksDB);
-    return leaksFilter.filter(query).sort(query).paginate(paginationParams);
+    return leaksFilter
+      .filter(filterDto)
+      .sort(filterDto)
+      .paginate(paginationParams);
   }
 
   private async getAllLeaks(): Promise<HIBPLeaksDB> {
     // If cache is valid and we have data, return the cached data
     if (!this.shouldRefreshCache() && this.leaksDB.size > 0) {
-      console.log('Using cached leaks data');
       return Promise.resolve(this.leaksDB);
     }
 
     // Otherwise, update the leaks
-    console.log('Cache invalid or empty, fetching new leaks data');
     return await this.updateLeaks();
   }
 
@@ -83,7 +85,6 @@ export class LeaksService implements OnModuleInit {
 
   private async fetchLeaksFromHIBP(): Promise<HIBPLeakRaw[]> {
     try {
-      console.log('Fetching leaks from HIBP');
       const response = await fetch(this.HIBP_API_URL);
       return (await response.json()) as HIBPLeakRaw[];
     } catch (error) {

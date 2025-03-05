@@ -7,8 +7,8 @@ import {
 } from '@nestjs/swagger';
 import { Pagination } from 'src/decorators/pagination.decorator';
 import { JwtGuard } from 'src/guards/jwt.guard';
-import { ApiLeaksFilter } from 'src/utilities/LeaksFilter/swagger.decoration';
 import { LeaksService } from './leaks.service';
+import { LeakFilterDto } from './schemas/requests/filter';
 import ResponseLeakResults, { ResponseLeak } from './schemas/responses/results';
 
 @UseGuards(JwtGuard)
@@ -20,7 +20,7 @@ export class LeaksController {
 
   @Get('news')
   @ApiOperation({ summary: 'Get latest data breaches' })
-  @ApiResponse({ type: ResponseLeakResults })
+  @ApiResponse({ type: [ResponseLeak] })
   public async getNews() {
     return this.leaksService.getNews();
   }
@@ -38,12 +38,11 @@ export class LeaksController {
   @ApiOperation({
     summary: 'Get data breaches with filtering, sorting and pagination',
   })
-  @ApiLeaksFilter()
   @ApiResponse({ type: ResponseLeakResults })
   public async getLeaks(
-    @Query() query: Record<string, string>,
+    @Query() filterDto: LeakFilterDto,
     @Pagination() pagination: PaginationParams,
   ) {
-    return this.leaksService.getLeaks(query, pagination);
+    return this.leaksService.getLeaks(filterDto, pagination);
   }
 }
