@@ -185,7 +185,7 @@ export class AccountsService {
   }
 
   public async addTagToAccount(accountId: string, tagId: string) {
-    return this.prisma.account.update({
+    await this.prisma.account.update({
       where: { id: accountId },
       data: { tags: { connect: { id: tagId } } },
       include: { tags: true },
@@ -193,7 +193,7 @@ export class AccountsService {
   }
 
   public async removeTagFromAccount(accountId: string, tagId: string) {
-    return this.prisma.account.update({
+    await this.prisma.account.update({
       where: { id: accountId },
       data: { tags: { disconnect: { id: tagId } } },
       include: { tags: true },
