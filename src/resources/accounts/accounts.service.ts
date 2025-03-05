@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ResponseId } from 'src/utilities/Common/schemas/id';
 import { CryptoService } from 'src/utilities/Crypto';
+import { GraphCacheService } from 'src/utilities/GraphCache';
 import Pagination from 'src/utilities/Pagination';
 import { PrismaService } from 'src/utilities/Prisma';
 import { Strength } from 'src/utilities/Strength';
-import { StatsService } from '../stats/stats.service';
 import RequestCreateAccount from './schemas/requests/create';
 import RequestUpdateAccount from './schemas/requests/update';
 import {
@@ -20,7 +20,7 @@ export class AccountsService {
   public constructor(
     private readonly prisma: PrismaService,
     private readonly crypto: CryptoService,
-    private readonly statsService: StatsService,
+    private readonly graphCache: GraphCacheService,
   ) {}
 
   public async getAccounts(
@@ -43,19 +43,29 @@ export class AccountsService {
   }
 
   public async createAccount(body: RequestCreateAccount): Promise<ResponseId> {
-    const result = await this.prisma.account.create({
-      data: {
-        passphrase: this.crypto.encrypt(body.passphrase),
-        simHash: this.crypto.generateSimhash(body.passphrase),
-        platform: body.platform,
-        url: body.url,
-        note: body.note,
-        icon: body.icon,
-        history: {
-          create: { strength: Strength.evaluate(body.passphrase).score },
+    const result = await this.prisma.$transaction(async (prisma) => {
+      const account = await prisma.account.create({
+        data: {
+          passphrase: this.crypto.encrypt(body.passphrase),
+          simHash: this.crypto.generateSimhash(body.passphrase),
+          platform: body.platform,
+          url: body.url,
+          note: body.note,
+          icon: body.icon,
+          history: {
+            create: { strength: Strength.evaluate(body.passphrase).score },
+          },
         },
-      },
-      select: { id: true },
+        select: { id: true },
+      });
+
+      // Update the strength cache
+      await this.graphCache.onRecordCreated(
+        Strength.evaluate(body.passphrase).score,
+        new Date(),
+      );
+
+      return account;
     });
 
     return result;
@@ -65,7 +75,11 @@ export class AccountsService {
     id: string,
     body: RequestUpdateAccount,
   ): Promise<void> {
-    // If the passphrase is not provided, we can just update the account
+    /**
+     * If the passphrase is not provided
+     * we can just update the account
+     * Trying to escape extra database calls
+     */
     if (!body.passphrase) {
       await this.prisma.account.update({
         where: { id },
@@ -103,10 +117,7 @@ export class AccountsService {
 
     const allAccounts = await this.prisma.account.findMany({
       where: { id: { not: id } },
-      select: {
-        simHash: true,
-        ...this.selectStandardFields(),
-      },
+      select: { simHash: true, ...this.selectStandardFields() },
     });
 
     return allAccounts
@@ -121,7 +132,30 @@ export class AccountsService {
   }
 
   public async deleteAccount(id: string): Promise<void> {
-    await this.prisma.account.delete({ where: { id } });
+    await this.prisma.$transaction(async (prisma) => {
+      const account = await prisma.account.delete({
+        where: { id },
+        select: {
+          history: {
+            select: { strength: true, id: true },
+            take: 1,
+            orderBy: { createdAt: 'desc' },
+          },
+        },
+      });
+
+      // Soft delete the last history record
+      await prisma.passphraseHistory.update({
+        where: { id: account.history[0].id },
+        data: { deletedAt: new Date() },
+      });
+
+      // Mark the record as deleted and disable for future updates
+      await this.graphCache.onRecordDeleted(
+        account.history[0].strength,
+        new Date(),
+      );
+    });
   }
 
   public async addTagToAccount(accountId: string, tagId: string) {
@@ -179,18 +213,37 @@ export class AccountsService {
     passphrase: string,
     body: RequestUpdateAccount,
   ) {
-    await this.prisma.account.update({
-      where: { id },
-      data: {
-        passphrase: this.crypto.encrypt(passphrase),
-        simHash: this.crypto.generateSimhash(passphrase),
-        platform: body.platform,
-        note: body.note,
-        icon: body.icon,
-        history: {
-          create: { strength: Strength.evaluate(passphrase).score },
+    await this.prisma.$transaction(async (prisma) => {
+      // Find the last history record
+      const lastHistory = await prisma.passphraseHistory.findFirstOrThrow({
+        where: { accountId: id, deletedAt: null },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      const strength = Strength.evaluate(passphrase).score;
+      await prisma.account.update({
+        where: { id },
+        data: {
+          passphrase: this.crypto.encrypt(passphrase),
+          simHash: this.crypto.generateSimhash(passphrase),
+          platform: body.platform,
+          note: body.note,
+          icon: body.icon,
+          history: {
+            create: { strength },
+            updateMany: {
+              // Soft delete the last history record
+              where: { deletedAt: null },
+              data: { deletedAt: new Date() },
+            },
+          },
         },
-      },
+      });
+
+      // Update the strength cache
+      const now = new Date();
+      await this.graphCache.onRecordDeleted(lastHistory.strength, now);
+      await this.graphCache.onRecordCreated(strength, now);
     });
   }
 
@@ -200,8 +253,6 @@ export class AccountsService {
       select: { passphrase: true },
     });
 
-    return {
-      passphrase: this.crypto.decrypt(account.passphrase),
-    };
+    return { passphrase: this.crypto.decrypt(account.passphrase) };
   }
 }
