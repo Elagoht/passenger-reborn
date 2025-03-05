@@ -1,11 +1,12 @@
-import { Global, Injectable } from '@nestjs/common';
+import { Global, Injectable, OnModuleInit } from '@nestjs/common';
+import { PrismaService } from '../Prisma/prisma.service';
 
 @Global()
 @Injectable()
-export class MemCacheService {
+export class MemCacheService implements OnModuleInit {
   private readonly cache: MemCache;
 
-  public constructor() {
+  public constructor(private readonly prisma: PrismaService) {
     this.cache = new Map();
   }
 
@@ -28,5 +29,15 @@ export class MemCacheService {
 
   public delete<T extends string>(key: T | DeterminatedSetting): void {
     this.cache.delete(key);
+  }
+
+  public async onModuleInit() {
+    const settings = await this.prisma.setting.findMany({
+      select: { key: true, value: true },
+    });
+
+    settings.forEach((setting) => {
+      this.cache.set(setting.key, setting.value);
+    });
   }
 }
