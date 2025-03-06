@@ -10,7 +10,7 @@ async function seedTags() {
     select: { id: true },
   });
 
-  await prisma.setting.create({
+  await prisma.configuration.create({
     data: { key: 'panicTagId', value: panicTagId.id },
   });
 }

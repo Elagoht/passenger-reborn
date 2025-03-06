@@ -14,29 +14,37 @@ export class MemCacheService implements OnModuleInit {
   }
 
   public get<T extends string>(
-    key: T | DeterminatedSetting,
+    key: T | DeterminatedConfiguration,
   ): string | undefined {
     return this.cache.get(key);
   }
 
   public set<T extends string>(
-    key: T | DeterminatedSetting,
+    key: T | DeterminatedConfiguration,
     value: string,
   ): void {
     this.cache.set(key, value);
   }
 
-  public delete<T extends string>(key: T | DeterminatedSetting): void {
+  public delete<T extends string>(key: T | DeterminatedConfiguration): void {
     this.cache.delete(key);
   }
 
   public async onModuleInit() {
-    const settings = await this.prisma.setting.findMany({
+    const configurations = await this.prisma.configuration.findMany({
       select: { key: true, value: true },
     });
 
-    settings.forEach((setting) => {
-      this.cache.set(setting.key, setting.value);
+    configurations.forEach((configuration) => {
+      this.cache.set(configuration.key, configuration.value);
+    });
+
+    const preferences = await this.prisma.preference.findMany({
+      select: { key: true, value: true },
+    });
+
+    preferences.forEach((preference) => {
+      this.cache.set(preference.key, preference.value);
     });
   }
 }

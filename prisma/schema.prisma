@@ -92,7 +92,14 @@ model StrengthCache {
   @@index([date])
 }
 
-model Setting {
+model Configuration {
+  id String @id @default(uuid())
+
+  key   String @unique
+  value String
+}
+
+model Preference {
   id String @id @default(uuid())
 
   key   String @unique

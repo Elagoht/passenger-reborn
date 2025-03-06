@@ -1,5 +1,5 @@
-type DeterminatedSetting = 'panicTagId' | 'strictMode';
+type DeterminatedConfiguration = 'panicTagId' | 'strictMode';
 
-type DeterminatedSettings = {
-  [key in DeterminatedSetting]: string;
+type DeterminatedConfiguration = {
+  [key in DeterminatedConfiguration]: string;
 };
