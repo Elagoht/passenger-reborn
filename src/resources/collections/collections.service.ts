@@ -71,7 +71,7 @@ export class CollectionsService {
         tags: account.tags.map((tag) => ({
           ...tag,
           isPanic:
-            tag.id === this.memCache.get('panicTagId') ? true : undefined,
+            tag.id === this.memCache.get('conf-panicTagId') ? true : undefined,
         })),
       })),
     };

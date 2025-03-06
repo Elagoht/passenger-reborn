@@ -36,7 +36,7 @@ export class MemCacheService implements OnModuleInit {
     });
 
     configurations.forEach((configuration) => {
-      this.cache.set(configuration.key, configuration.value);
+      this.cache.set(`conf-${configuration.key}`, configuration.value);
     });
 
     const preferences = await this.prisma.preference.findMany({
@@ -44,7 +44,7 @@ export class MemCacheService implements OnModuleInit {
     });
 
     preferences.forEach((preference) => {
-      this.cache.set(preference.key, preference.value);
+      this.cache.set(`pref-${preference.key}`, preference.value);
     });
   }
 }

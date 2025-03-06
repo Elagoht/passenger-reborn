@@ -11,7 +11,7 @@ export class PanicService {
   ) {}
 
   public async getPanicAccounts(): Promise<ResponseAccountItem[]> {
-    const panicTagId = this.memCache.get('panicTagId');
+    const panicTagId = this.memCache.get('conf-panicTagId');
     if (!panicTagId) throw new Error('Not implemented');
 
     const accounts = await this.prisma.account.findMany({

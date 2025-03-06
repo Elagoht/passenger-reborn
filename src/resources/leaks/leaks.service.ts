@@ -127,7 +127,7 @@ export class LeaksService implements OnModuleInit {
   }
 
   private shouldRefreshCache(): boolean {
-    const cache = this.memCache.get('leaksCheckedAt');
+    const cache = this.memCache.get('conf-leaksCheckedAt');
     if (!cache) return true;
 
     const lastChecked = new Date(cache);

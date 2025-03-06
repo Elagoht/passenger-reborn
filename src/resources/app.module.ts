@@ -9,6 +9,7 @@ import { CollectionsModule } from './collections/collections.module';
 import { GenerateModule } from './generate/generate.module';
 import { LeaksModule } from './leaks/leaks.module';
 import { PanicModule } from './panic/panic.module';
+import { PreferencesModule } from './preferences/preferences.module';
 import { StatsModule } from './stats/stats.module';
 import { TagsModule } from './tags/tags.module';
 
@@ -23,6 +24,7 @@ import { TagsModule } from './tags/tags.module';
     LeaksModule,
     MemCacheModule,
     PanicModule,
+    PreferencesModule,
     PrismaModule,
     StatsModule,
     TagsModule,
