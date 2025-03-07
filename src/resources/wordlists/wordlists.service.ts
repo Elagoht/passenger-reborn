@@ -1,6 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { WordlistStatus } from '@prisma/client';
+import { execSync } from 'child_process';
+import { chmod } from 'fs/promises';
 import { join } from 'path';
+import { cwd } from 'process';
 import { GitService } from 'src/utilities/Git/git.service';
 import { PrismaService } from 'src/utilities/Prisma/prisma.service';
 import {
@@ -65,6 +68,8 @@ export class WordListsService {
       select: { status: true, slug: true },
     });
 
+    this.checkIfAlreadyDownloaded(wordList.status);
+
     if (wordList.status !== WordlistStatus.DOWNLOADING) {
       throw new BadRequestException('Word list is not currently downloading');
     }
@@ -85,6 +90,8 @@ export class WordListsService {
         where: { id },
         select: { status: true, repository: true, slug: true },
       });
+
+    this.checkIfAlreadyDownloaded(status);
 
     this.checkIfAlreadyDownloading(status);
 
@@ -144,6 +151,12 @@ export class WordListsService {
       status !== WordlistStatus.FAILED
     ) {
       throw new BadRequestException('Word list already downloading');
+    }
+  }
+
+  private checkIfAlreadyDownloaded(status: string) {
+    if (status === WordlistStatus.DOWNLOADED) {
+      throw new BadRequestException('Word list already downloaded');
     }
   }
 
@@ -210,7 +223,7 @@ export class WordListsService {
     'sizeUnits',
   ];
 
-  public async validateDownloadedRepository(id: string) {
+  public async triggerValidateDownloadedRepository(id: string) {
     const wordList = await this.prisma.wordlist.findUniqueOrThrow({
       where: { id },
       select: { status: true, slug: true, totalFiles: true },
@@ -230,7 +243,16 @@ export class WordListsService {
       throw new BadRequestException('Cannot start a validation at the moment');
     }
 
+    // Fire and forget
+    void this.validateDownloadedRepository(id);
     void this.updateStatus(id, WordlistStatus.VALIDATING, 'Validating');
+  }
+
+  private async validateDownloadedRepository(id: string) {
+    const wordList = await this.prisma.wordlist.findUniqueOrThrow({
+      where: { id },
+      select: { slug: true, totalFiles: true },
+    });
 
     try {
       let tree: string[] | undefined;
@@ -256,18 +278,49 @@ export class WordListsService {
       }
 
       // Check if all files under data/ named like {number}.ticket are valid
+      // and if they are text files, set permissions to make them only readable
+      // by the owner
       const files = tree.filter((file) => file.startsWith('data/'));
-      for (const file of files) {
-        const regex = /^data\/[0-9]+.ticket$/;
-        if (!regex.test(file)) {
-          throw new BadRequestException('File does not match format');
-        }
-      }
+      await Promise.all(
+        files.map(async (file) => {
+          const regex = /^data\/[0-9]+.ticket$/;
+          if (!regex.test(file)) {
+            throw new BadRequestException('File does not match format');
+          }
+
+          if (
+            !this.isPlainText(
+              join(cwd(), 'data', 'wordlists', wordList.slug, file),
+            )
+          ) {
+            throw new BadRequestException(`File is not a text file: ${file}`);
+          }
+
+          await this.setFilePermissions(
+            join(cwd(), 'data', 'wordlists', wordList.slug, file),
+          );
+        }),
+      );
 
       await this.updateStatus(id, WordlistStatus.VALIDATED, 'Validated');
     } catch (error) {
       await this.updateStatus(id, WordlistStatus.FAILED, 'Failed to validate');
       throw error;
     }
+  }
+
+  private isPlainText(filePath: string) {
+    try {
+      const output = execSync(`file --mime-type -b ${filePath}`)
+        .toString()
+        .trim();
+      return output.startsWith('text/');
+    } catch {
+      return false;
+    }
+  }
+
+  private async setFilePermissions(filePath: string) {
+    await chmod(filePath, 0o400);
   }
 }

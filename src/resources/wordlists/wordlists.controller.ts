@@ -80,6 +80,6 @@ export class WordListsController {
   @Post(':id/validate')
   @ApiOperation({ summary: 'Validate a word list by ID' })
   async validateWordList(@Param('id') id: string) {
-    return this.wordListsService.validateDownloadedRepository(id);
+    return this.wordListsService.triggerValidateDownloadedRepository(id);
   }
 }
