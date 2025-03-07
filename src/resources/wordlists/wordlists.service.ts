@@ -258,7 +258,7 @@ export class WordListsService {
       // Check if all files under data/ named like {number}.ticket are valid
       const files = tree.filter((file) => file.startsWith('data/'));
       for (const file of files) {
-        const regex = /^[0-9]+.ticket$/;
+        const regex = /^data\/[0-9]+.ticket$/;
         if (!regex.test(file)) {
           throw new BadRequestException('File does not match format');
         }
