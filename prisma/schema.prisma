@@ -36,6 +36,8 @@ model Account {
 
   history PassphraseHistory[] @relation("PassphraseHistory")
 
+  analyses Analysis[] @relation("AnalysisToAccount")
+
   @@unique([url, platform, passphrase])
   @@index([platform])
   @@index([simHash])
@@ -104,4 +106,65 @@ model Preference {
 
   key   String @unique
   value String
+}
+
+model Wordlist {
+  id String @id @default(uuid())
+
+  displayName    String
+  slug           String @unique
+  minLength      Int
+  maxLength      Int
+  totalPasswords Int
+  totalFiles     Int
+  year           Int
+  size           Int
+  sizeUnits      String
+  description    String
+  repositoryUrl  String
+  source         String
+  publishedBy    String
+  adaptedBy      String
+
+  status  WordlistStatus @default(IMPORTED)
+  message String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  analyses Analysis[] @relation("AnalysisToWordlist")
+}
+
+enum WordlistStatus {
+  IMPORTED
+  DOWNLOADING
+  DOWNLOADED
+  READY
+  ANALYZING
+  FAILED
+}
+
+model Analysis {
+  id String @id @default(uuid())
+
+  status  AnalysisStatus @default(IDLE)
+  message String?
+
+  totalMatched Int
+  totalChecked Int
+  tookSeconds  Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts  Account[]  @relation("AnalysisToAccount")
+  wordlists Wordlist[] @relation("AnalysisToWordlist")
+}
+
+enum AnalysisStatus {
+  IDLE
+  RUNNING
+  COMPLETED
+  FAILED
 }
