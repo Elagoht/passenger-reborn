@@ -107,7 +107,6 @@ export class WordListsService {
     return await this.prisma.wordlist.create({
       data: {
         ...metadata,
-        totalPasswords: metadata.totalPasswords,
         status: WordlistStatus.IMPORTED,
         repositoryUrl: url,
       },
