@@ -3,7 +3,10 @@ import { WordlistStatus } from '@prisma/client';
 import { join } from 'path';
 import { GitService } from 'src/utilities/Git/git.service';
 import { PrismaService } from 'src/utilities/Prisma/prisma.service';
-import { ResponseWordListCard } from './schemas/responses/wordlists';
+import {
+  ResponseWordList,
+  ResponseWordListCard,
+} from './schemas/responses/wordlists';
 
 @Injectable()
 export class WordListsService {
@@ -13,7 +16,7 @@ export class WordListsService {
   ) {}
 
   public async getWordLists(): Promise<ResponseWordListCard[]> {
-    const wordLists = await this.prisma.wordlist.findMany({
+    return this.prisma.wordlist.findMany({
       select: {
         id: true,
         displayName: true,
@@ -22,71 +25,77 @@ export class WordListsService {
         year: true,
         size: true,
         sizeUnits: true,
-        minLength: true,
-        maxLength: true,
         totalPasswords: true,
       },
     });
-
-    return wordLists.map((wordList) => {
-      return {
-        ...wordList,
-        sizeUnits: undefined,
-        size: `${wordList.size} ${wordList.sizeUnits}`,
-      };
-    });
   }
 
-  public async getWordList(id: string) {
-    return this.prisma.wordlist.findUniqueOrThrow({ where: { id } });
+  public async getWordList(id: string): Promise<ResponseWordList> {
+    const wordList = await this.prisma.wordlist.findUniqueOrThrow({
+      where: { id },
+      select: {
+        id: true,
+        displayName: true,
+        description: true,
+        status: true,
+        year: true,
+        minLength: true,
+        maxLength: true,
+        totalFiles: true,
+        slug: true,
+        repository: true,
+        source: true,
+        publishedBy: true,
+        adaptedBy: true,
+        message: true,
+        totalPasswords: true,
+        size: true,
+        sizeUnits: true,
+        _count: { select: { analyses: true } },
+      },
+    });
+
+    const { _count, ...rest } = wordList;
+    return { ...rest, analysesCount: _count.analyses };
+  }
+
+  public async cancelWordListDownload(id: string) {
+    const wordList = await this.prisma.wordlist.findUniqueOrThrow({
+      where: { id },
+      select: { status: true, slug: true },
+    });
+
+    if (wordList.status !== WordlistStatus.DOWNLOADING) {
+      throw new BadRequestException('Word list is not currently downloading');
+    }
+
+    const repositoryPath = join('wordlists', wordList.slug);
+    const canceled = await this.git.cancelClone(repositoryPath);
+
+    if (canceled) {
+      await this.updateStatus(id, WordlistStatus.IMPORTED, 'Download canceled');
+    } else {
+      throw new BadRequestException('Failed to cancel download');
+    }
   }
 
   public async downloadWordList(id: string) {
-    const wordList = await this.prisma.wordlist.findUniqueOrThrow({
-      where: { id },
-    });
+    const { status, repository, slug } =
+      await this.prisma.wordlist.findUniqueOrThrow({
+        where: { id },
+        select: { status: true, repository: true, slug: true },
+      });
 
-    if (
-      wordList.status !== WordlistStatus.IMPORTED &&
-      wordList.status !== WordlistStatus.FAILED
-    ) {
-      throw new BadRequestException('Word list already downloading');
-    }
+    this.checkIfAlreadyDownloading(status);
 
-    const metadata = await this.getOnlineRepositoryMetadata(
-      wordList.repositoryUrl,
-    );
-
-    await this.prisma.wordlist.update({
-      where: { id },
-      data: {
-        status: WordlistStatus.DOWNLOADING,
-        message: `Download started at ${new Date().toISOString()}`,
-      },
-    });
+    await this.updateStatus(id, WordlistStatus.DOWNLOADING, 'Download started');
 
     try {
-      await this.downloadOnlineRepository(wordList.repositoryUrl, metadata);
-    } catch (error) {
-      await this.prisma.wordlist.update({
-        where: { id },
-        data: {
-          status: WordlistStatus.FAILED,
-          message:
-            error instanceof Error
-              ? error.message
-              : 'Unknown error during download',
-        },
-      });
+      this.triggerDownloadOnlineRepository(repository, slug, id);
+    } catch {
+      await this.updateStatus(id, WordlistStatus.FAILED, 'Failed to download');
+      return;
     }
-
-    await this.prisma.wordlist.update({
-      where: { id },
-      data: {
-        status: WordlistStatus.DOWNLOADED,
-        message: `Download completed at ${new Date().toISOString()}`,
-      },
-    });
   }
 
   public async deleteWordList(id: string) {
@@ -96,19 +105,17 @@ export class WordListsService {
     });
 
     await this.prisma.wordlist.delete({ where: { id } });
-    void this.git.deleteRepository(join('wordlists', wordList.slug));
+    void this.deleteDownloadedRepository(wordList.slug);
   }
 
   public async importWordList(url: string) {
-    await this.checkOnlineRepository(url);
     const metadata = await this.getOnlineRepositoryMetadata(url);
-    await this.checkCollision(metadata);
 
     return await this.prisma.wordlist.create({
       data: {
         ...metadata,
         status: WordlistStatus.IMPORTED,
-        repositoryUrl: url,
+        message: `[${new Date().toISOString()}] Imported`,
       },
     });
   }
@@ -120,60 +127,78 @@ export class WordListsService {
     });
   }
 
-  private async checkOnlineRepository(url: string) {
-    const isRemoteRepository = await this.git.isRemoteRepository(url);
-    if (!isRemoteRepository) {
-      throw new BadRequestException('Invalid repository URL');
+  private async updateStatus(
+    id: string,
+    status: WordlistStatus,
+    message: string,
+  ) {
+    await this.prisma.wordlist.update({
+      where: { id },
+      data: { status, message: `[${new Date().toISOString()}] ${message}` },
+    });
+  }
+
+  private checkIfAlreadyDownloading(status: WordlistStatus) {
+    if (
+      status !== WordlistStatus.IMPORTED &&
+      status !== WordlistStatus.FAILED
+    ) {
+      throw new BadRequestException('Word list already downloading');
     }
   }
 
   private async getOnlineRepositoryMetadata(
     url: string,
   ): Promise<WordListMetadata> {
-    const metadataUrl = this.git.getRepositoryRawUrl(url) + '/metadata.json';
-    if (!metadataUrl) {
-      throw new BadRequestException('Unsupported repository URL');
+    const metaDataResponse = await fetch(url);
+
+    let metaData: WordListMetadata | undefined;
+    try {
+      metaData = (await metaDataResponse.json()) as WordListMetadata;
+    } catch {
+      throw new BadRequestException('Could not validate JSON metadata');
     }
 
-    console.log(metadataUrl);
+    const missingFields = this.METADATA_FIELDS.filter(
+      (field) => metaData[field] === undefined,
+    );
 
-    const metaDataResponse = await fetch(metadataUrl);
-    const metaData = (await metaDataResponse.json()) as WordListMetadata;
-
-    if (this.METADATA_FIELDS.some((field) => metaData[field] === undefined)) {
-      throw new BadRequestException('Invalid metadata');
+    if (missingFields.length > 0) {
+      throw new BadRequestException(
+        `Missing required fields: ${missingFields.join(', ')}`,
+      );
     }
 
-    console.log(metaData);
     return metaData;
   }
 
-  private async checkCollision(metadata: WordListMetadata) {
-    const wordList = await this.prisma.wordlist.findFirst({
-      where: { displayName: metadata.displayName },
-    });
-
-    if (wordList) {
-      throw new BadRequestException('Word list already exists');
-    }
-  }
-
-  private async downloadOnlineRepository(
+  private triggerDownloadOnlineRepository(
     url: string,
-    metadata: WordListMetadata,
+    slug: string,
+    id: string,
   ) {
-    await this.git.cloneRepository(url, join('wordlists', metadata.slug));
+    this.git.cloneRepository(
+      url,
+      join('wordlists', slug),
+      () => {
+        void this.updateStatus(id, WordlistStatus.DOWNLOADED, 'Downloaded');
+      },
+      () => {
+        void this.updateStatus(id, WordlistStatus.FAILED, 'Failed downloading');
+      },
+    );
   }
 
   private async deleteDownloadedRepository(slug: string) {
     await this.git.deleteRepository(join('wordlists', slug));
   }
 
-  private METADATA_FIELDS = [
+  private METADATA_FIELDS: Array<keyof WordListMetadata> = [
     'displayName',
     'slug',
     'year',
     'source',
+    'repository',
     'description',
     'publishedBy',
     'adaptedBy',
@@ -184,4 +209,65 @@ export class WordListsService {
     'size',
     'sizeUnits',
   ];
+
+  public async validateDownloadedRepository(id: string) {
+    const wordList = await this.prisma.wordlist.findUniqueOrThrow({
+      where: { id },
+      select: { status: true, slug: true, totalFiles: true },
+    });
+
+    if (
+      (
+        [
+          WordlistStatus.UNVALIDATED,
+          WordlistStatus.VALIDATING,
+          WordlistStatus.DOWNLOADING,
+          WordlistStatus.IMPORTED,
+          WordlistStatus.ANALYZING,
+        ] as WordlistStatus[]
+      ).includes(wordList.status)
+    ) {
+      throw new BadRequestException('Cannot start a validation at the moment');
+    }
+
+    void this.updateStatus(id, WordlistStatus.VALIDATING, 'Validating');
+
+    try {
+      let tree: string[] | undefined;
+      try {
+        tree = await this.git.getFileTree(join('wordlists', wordList.slug));
+      } catch {
+        await this.updateStatus(id, WordlistStatus.FAILED, 'Could not trigger');
+        throw new BadRequestException(
+          'Directory not found, did the download succeed?',
+        );
+      }
+
+      // Check if there is a data/ directory
+      if (!tree.includes('data')) {
+        throw new BadRequestException('Data directory not found');
+      }
+
+      // Check if the total number of files matches the metadata
+      const totalFiles = tree.filter((file) => file.startsWith('data/')).length;
+
+      if (totalFiles !== wordList.totalFiles) {
+        throw new BadRequestException('Total files do not match metadata');
+      }
+
+      // Check if all files under data/ named like {number}.ticket are valid
+      const files = tree.filter((file) => file.startsWith('data/'));
+      for (const file of files) {
+        const regex = /^[0-9]+.ticket$/;
+        if (!regex.test(file)) {
+          throw new BadRequestException('File does not match format');
+        }
+      }
+
+      await this.updateStatus(id, WordlistStatus.VALIDATED, 'Validated');
+    } catch (error) {
+      await this.updateStatus(id, WordlistStatus.FAILED, 'Failed to validate');
+      throw error;
+    }
+  }
 }

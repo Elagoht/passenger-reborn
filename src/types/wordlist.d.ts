@@ -3,7 +3,7 @@ type WordListMetadata = {
   slug: string;
   year: number;
   source: string;
-  repositoryUrl: string;
+  repository: string;
   description: string;
   publishedBy: string;
   adaptedBy: string;

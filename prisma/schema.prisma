@@ -121,7 +121,7 @@ model Wordlist {
   size           Int
   sizeUnits      String
   description    String
-  repositoryUrl  String
+  repository     String
   source         String
   publishedBy    String
   adaptedBy      String
@@ -140,7 +140,9 @@ enum WordlistStatus {
   IMPORTED
   DOWNLOADING
   DOWNLOADED
-  READY
+  UNVALIDATED
+  VALIDATING
+  VALIDATED
   ANALYZING
   FAILED
 }

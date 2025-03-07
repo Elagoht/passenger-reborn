@@ -26,7 +26,10 @@ export class ResponseWordListCard {
   year: number;
 
   @ApiProperty({ description: 'The size of the word list' })
-  size: string;
+  size: number;
+
+  @ApiProperty({ description: 'The size units of the word list' })
+  sizeUnits: string;
 }
 
 export class ResponseWordList extends ResponseWordListCard {
@@ -40,13 +43,13 @@ export class ResponseWordList extends ResponseWordListCard {
   totalFiles: number;
 
   @ApiProperty({ description: 'The path of the word list' })
-  path: string;
+  slug: string;
 
   @ApiProperty({ description: 'The repository URL of the word list' })
-  repositoryUrl: string;
+  repository: string;
 
   @ApiProperty({ description: 'The source URL of the word list' })
-  sourceUrl: string;
+  source: string;
 
   @ApiProperty({ description: 'The published by of the word list' })
   publishedBy: string;
@@ -54,8 +57,12 @@ export class ResponseWordList extends ResponseWordListCard {
   @ApiProperty({ description: 'The adapted by of the word list' })
   adaptedBy: string;
 
-  @ApiProperty({ description: 'The message of the word list' })
-  message: string;
+  @ApiProperty({
+    description: 'The message of the word list',
+    required: false,
+    nullable: true,
+  })
+  message: string | null;
 
   @ApiProperty({ description: 'The count of analyses of the word list' })
   analysesCount: number;

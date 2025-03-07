@@ -1,64 +1,76 @@
 import { Injectable } from '@nestjs/common';
-import { rm } from 'fs/promises';
+import { exec } from 'child_process';
+import { readdir, rm } from 'fs/promises';
 import { join } from 'path';
 import { cwd } from 'process';
-import simpleGit, { SimpleGit } from 'simple-git';
 
 @Injectable()
 export class GitService {
-  private git: SimpleGit;
+  public constructor() {}
 
-  public constructor() {
-    this.git = simpleGit();
-  }
+  private activeClones: Map<string, { pid?: number }> = new Map();
 
-  public async isRemoteRepository(url: string) {
-    const isRepository = await this.git.listRemote([url]);
-    return isRepository.length > 0;
-  }
+  public cloneRepository(
+    url: string,
+    path: string,
+    onSuccess?: () => void,
+    onFail?: () => void,
+  ) {
+    const fullPath = join(cwd(), 'data', path);
 
-  public async cloneRepository(url: string, path: string) {
-    await this.git.clone(url, join(cwd(), 'data', path));
-  }
+    // Create an entry for this clone operation
+    this.activeClones.set(path, {});
 
-  public async pullRepository(path: string) {
-    await this.git.pull(path);
-  }
+    // Use child_process to get access to the process ID
+    const cloneProcess = exec(`git clone ${url} ${fullPath}`);
 
-  public getRepositoryRawUrl(url: string): string | undefined {
-    const hostType = this.getHostType(url);
-    switch (hostType) {
-      case 'github': {
-        const [owner, repo] = url.split('/').slice(3);
-        return `https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/main`;
+    // Store the process ID for potential termination
+    this.activeClones.set(path, { pid: cloneProcess.pid });
+
+    // Set up event handlers for cleanup
+    cloneProcess.on('exit', (code) => {
+      this.activeClones.delete(path);
+      if (code === 0) {
+        onSuccess?.();
+      } else {
+        onFail?.();
       }
-      // ! NOT TESTED
-      case 'gitlab': {
-        const [owner, repo] = url.split('/').slice(3);
-        return `https://gitlab.com/${owner}/${repo}/raw/refs/heads/main`;
-      }
-      // ! NOT TESTED
-      case 'bitbucket': {
-        const [owner, repo] = url.split('/').slice(3);
-        return `https://bitbucket.org/${owner}/${repo}/raw/refs/heads/main`;
-      }
-      default:
-        return;
-    }
+    });
+
+    cloneProcess.on('error', (err) => {
+      this.activeClones.delete(path);
+      onFail?.();
+      console.error('Git clone error: ', err);
+    });
   }
 
-  public getHostType(url: string): KnownHostType | undefined {
-    const host = new URL(url).host;
-    if (host.includes('github.com')) {
-      return 'github';
+  public async cancelClone(path: string): Promise<boolean> {
+    const cloneOperation = this.activeClones.get(path);
+
+    if (!cloneOperation || !cloneOperation.pid) {
+      return false; // No active clone to cancel
     }
-    if (host.includes('gitlab.com')) {
-      return 'gitlab';
+
+    try {
+      // Kill the process
+      process.kill(cloneOperation.pid);
+
+      // Clean up the partially cloned directory if it exists
+      const fullPath = join(cwd(), 'data', path);
+      await rm(fullPath, {
+        recursive: true,
+        force: true,
+        // Ignore errors if directory doesn't exist
+      }).catch(() => void 0);
+
+      // Remove from active clones
+      this.activeClones.delete(path);
+
+      return true;
+    } catch (error) {
+      console.error('Failed to cancel clone:', error);
+      return false;
     }
-    if (host.includes('bitbucket.org')) {
-      return 'bitbucket';
-    }
-    return;
   }
 
   /**
@@ -67,6 +79,10 @@ export class GitService {
   public async deleteRepository(path: string) {
     await rm(join(cwd(), 'data', path), { recursive: true, force: true });
   }
-}
 
-type KnownHostType = 'github' | 'gitlab' | 'bitbucket';
+  public async getFileTree(path: string) {
+    const fullPath = join(cwd(), 'data', path);
+    const files = await readdir(fullPath, { recursive: true });
+    return files;
+  }
+}

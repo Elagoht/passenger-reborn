@@ -16,7 +16,10 @@ import {
 } from '@nestjs/swagger';
 import { JwtGuard } from 'src/guards/jwt.guard';
 import { RequestImportWordList } from './schemas/requests/import';
-import { ResponseWordListCard } from './schemas/responses/wordlists';
+import {
+  ResponseWordList,
+  ResponseWordListCard,
+} from './schemas/responses/wordlists';
 import { WordListsService } from './wordlists.service';
 
 @Controller('word-lists')
@@ -29,7 +32,7 @@ export class WordListsController {
   @Post('import')
   @ApiOperation({ summary: 'Import a new word list via URL' })
   @ApiBody({ type: RequestImportWordList })
-  async createWordList(@Body() createWordListDto: RequestImportWordList) {
+  async importWordList(@Body() createWordListDto: RequestImportWordList) {
     return this.wordListsService.importWordList(createWordListDto.url);
   }
 
@@ -45,7 +48,7 @@ export class WordListsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a word list by ID with all details' })
-  @ApiResponse({ description: 'The word list', type: ResponseWordListCard })
+  @ApiResponse({ description: 'The word list', type: ResponseWordList })
   async getWordList(@Param('id') id: string) {
     return this.wordListsService.getWordList(id);
   }
@@ -62,9 +65,21 @@ export class WordListsController {
     return this.wordListsService.downloadWordList(id);
   }
 
+  @Post(':id/cancel-download')
+  @ApiOperation({ summary: 'Cancel the download process for a word list' })
+  async cancelWordListDownload(@Param('id') id: string) {
+    return this.wordListsService.cancelWordListDownload(id);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a word list by ID' })
   async deleteWordList(@Param('id') id: string) {
     return this.wordListsService.deleteWordList(id);
+  }
+
+  @Post(':id/validate')
+  @ApiOperation({ summary: 'Validate a word list by ID' })
+  async validateWordList(@Param('id') id: string) {
+    return this.wordListsService.validateDownloadedRepository(id);
   }
 }
