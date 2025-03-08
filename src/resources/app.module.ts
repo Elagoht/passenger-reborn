@@ -17,9 +17,9 @@ import { WordListsModule } from './wordlists/wordlists.module';
 
 @Module({
   imports: [
+    AccountsModule,
     AnalysesModule,
     AuthModule,
-    AccountsModule,
     CollectionsModule,
     CryptoModule,
     GenerateModule,
