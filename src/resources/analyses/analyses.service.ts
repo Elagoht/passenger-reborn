@@ -235,9 +235,7 @@ export class AnalysesService {
         ) {
           this.addLog(
             analysisId,
-            `Skipping passwords of length ${
-              passwordLength
-            } (outside wordlist range)`,
+            `Skipping passwords of length ${passwordLength} (outside wordlist range)`,
           );
           continue;
         }
@@ -262,25 +260,37 @@ export class AnalysesService {
           const wordlistPasswords = fileContent.split('\n').filter(Boolean);
 
           totalChecked += wordlistPasswords.length;
-          this.addLog(
-            analysisId,
-            `Checking ${wordlistPasswords.length} passwords of length ${
-              passwordLength
-            }`,
-          );
 
-          // Check each password in the wordlist
-          for (const wordlistPassword of wordlistPasswords) {
-            // Step 5: Check if any account uses this password
-            if (passwordToAccounts.has(wordlistPassword)) {
-              const affectedAccounts =
-                passwordToAccounts.get(wordlistPassword)!;
+          // Get unique passwords of this length from our accounts
+          const uniqueAccountPasswords = new Set<string>();
+          accountPasswords.forEach((password) => {
+            if (password.length === passwordLength) {
+              uniqueAccountPasswords.add(password);
+            }
+          });
+
+          // Only log if there are passwords to check
+          if (uniqueAccountPasswords.size > 0) {
+            this.addLog(
+              analysisId,
+              `Checking ${uniqueAccountPasswords.size} unique passwords against ${wordlistPasswords.length} wordlist entries`,
+            );
+          }
+
+          // Check each unique account password using binary search
+          for (const accountPassword of uniqueAccountPasswords) {
+            // Perform binary search on the wordlist
+            const found = this.binarySearch(wordlistPasswords, accountPassword);
+
+            if (found) {
+              const affectedAccounts = passwordToAccounts.get(accountPassword)!;
+
+              // Create a masked version of the password for logging
+              const maskedPassword = this.maskPassword(accountPassword);
 
               this.addLog(
                 analysisId,
-                `Found match: "${wordlistPassword}" used by ${
-                  affectedAccounts.length
-                } account(s)`,
+                `Found match: "${maskedPassword}" used by ${affectedAccounts.length} account(s)`,
               );
 
               // Add all affected accounts to the matched set
@@ -417,10 +427,6 @@ export class AnalysesService {
     };
   }
 
-  /**
-   * Stop a running analysis
-   * @param id The ID of the analysis to stop
-   */
   public async stopAnalysis(id: string): Promise<void> {
     // Check if the analysis exists
     await this.prisma.analysis.findUniqueOrThrow({ where: { id } });
@@ -437,5 +443,41 @@ export class AnalysesService {
     } else {
       throw new BadRequestException('This analysis is not currently running');
     }
+  }
+
+  private binarySearch(sortedArray: string[], target: string): boolean {
+    let left = 0;
+    let right = sortedArray.length - 1;
+
+    while (left <= right) {
+      const mid = Math.floor((left + right) / 2);
+      const comparison = target.localeCompare(sortedArray[mid]);
+
+      if (comparison === 0) {
+        return true; // Found the target
+      } else if (comparison < 0) {
+        right = mid - 1; // Target is in the left half
+      } else {
+        left = mid + 1; // Target is in the right half
+      }
+    }
+
+    return false; // Target not found
+  }
+
+  /**
+   * Creates a masked version of a password for logging purposes
+   * Shows only the first and last character, with asterisks in between
+   */
+  private maskPassword(password: string): string {
+    if (password.length <= 2) {
+      return '*'.repeat(password.length);
+    }
+
+    const firstChar = password.charAt(0);
+    const lastChar = password.charAt(password.length - 1);
+    const middleAsterisks = '*'.repeat(Math.min(password.length - 2, 6));
+
+    return `${firstChar}${middleAsterisks}${lastChar}`;
   }
 }

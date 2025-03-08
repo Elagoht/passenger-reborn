@@ -95,6 +95,33 @@ export class WordListsService {
 
     this.checkIfAlreadyDownloading(status);
 
+    // Check if directory already exists
+    const repositoryPath = join('wordlists', slug);
+    const directoryExists = await this.git.repositoryExists(repositoryPath);
+
+    if (directoryExists) {
+      // If directory exists, verify it's a valid git repository
+      const isValidRepo = await this.git.isValidRepository(repositoryPath);
+
+      if (isValidRepo) {
+        // If directory exists and is valid, update status to DOWNLOADED
+        await this.updateStatus(
+          id,
+          WordlistStatus.DOWNLOADED,
+          'Directory already exists and is valid, marked as downloaded',
+        );
+        return;
+      } else {
+        // If directory exists but is corrupted, delete it and proceed with download
+        await this.git.deleteRepository(repositoryPath);
+        await this.updateStatus(
+          id,
+          WordlistStatus.IMPORTED,
+          'Found corrupted repository, deleted it and will proceed with download',
+        );
+      }
+    }
+
     await this.updateStatus(id, WordlistStatus.DOWNLOADING, 'Download started');
 
     try {

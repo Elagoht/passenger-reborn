@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { exec } from 'child_process';
-import { readdir, rm } from 'fs/promises';
+import { readdir, rm, stat } from 'fs/promises';
 import { join } from 'path';
 import { cwd } from 'process';
 
@@ -84,5 +84,59 @@ export class GitService {
     const fullPath = join(cwd(), 'data', path);
     const files = await readdir(fullPath, { recursive: true });
     return files;
+  }
+
+  /**
+   * Checks if a repository directory exists
+   * @param path Path to the repository
+   * @returns True if the repository directory exists
+   */
+  public async repositoryExists(path: string): Promise<boolean> {
+    try {
+      const fullPath = join(cwd(), 'data', path);
+      const stats = await stat(fullPath);
+      return stats.isDirectory();
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Checks if a directory is a valid git repository
+   * @param path Path to the repository
+   * @returns True if the directory is a valid git repository
+   */
+  public async isValidRepository(path: string): Promise<boolean> {
+    try {
+      const fullPath = join(cwd(), 'data', path);
+
+      // Check if the directory exists
+      const stats = await stat(fullPath);
+      if (!stats.isDirectory()) {
+        return false;
+      }
+
+      // Check if it has a .git directory
+      const gitDirExists = await stat(join(fullPath, '.git'))
+        .then((stats) => stats.isDirectory())
+        .catch(() => false);
+
+      if (!gitDirExists) {
+        return false;
+      }
+
+      // Try to run a git command to verify it's a valid repo
+      return new Promise<boolean>((resolve) => {
+        exec(`git -C ${fullPath} status`, (error) => {
+          if (error) {
+            resolve(false);
+          } else {
+            resolve(true);
+          }
+        });
+      });
+    } catch (error) {
+      return false;
+    }
   }
 }

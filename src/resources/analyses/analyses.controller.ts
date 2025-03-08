@@ -1,8 +1,23 @@
-import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ApiPaginationQuery } from 'src/decorators/pagination-query.decorator';
 import { Pagination } from 'src/decorators/pagination.decorator';
 import { JwtGuard } from 'src/guards/jwt.guard';
+import { ResponseId } from 'src/utilities/Common/schemas/id';
 import { ResponseWordListCard } from '../wordlists/schemas/responses/wordlists';
 import { AnalysesService } from './analyses.service';
 
@@ -17,14 +32,21 @@ import { AnalysesService } from './analyses.service';
 export class AnalysesController {
   public constructor(private readonly analysesService: AnalysesService) {}
 
-  @Post('initiate/:id')
-  public async initiateAnalysis(@Param('id') id: string) {
-    return this.analysesService.initializeAnalysis(id);
+  @Post('initialize/:wordlistId')
+  @ApiResponse({ type: ResponseId })
+  @ApiOperation({ summary: 'Initialize a new analysis over a wordlist' })
+  @ApiParam({ name: 'wordlistId', description: 'ID of the wordlist' })
+  @HttpCode(HttpStatus.OK)
+  public async initializeAnalysis(@Param('wordlistId') wordlistId: string) {
+    return this.analysesService.initializeAnalysis(wordlistId);
   }
 
-  @Post('stop/:id')
-  public async stopAnalysis(@Param('id') id: string) {
-    return this.analysesService.stopAnalysis(id);
+  @Post('stop/:analysisId')
+  @ApiOperation({ summary: 'Stop an analysis' })
+  @ApiParam({ name: 'analysisId', description: 'ID of the analysis to stop' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  public async stopAnalysis(@Param('analysisId') analysisId: string) {
+    return this.analysesService.stopAnalysis(analysisId);
   }
 
   /**
