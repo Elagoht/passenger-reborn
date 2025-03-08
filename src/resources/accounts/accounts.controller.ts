@@ -17,7 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { PaginationQuery } from 'src/decorators/pagination-query.decorator';
+import { ApiPaginationQuery } from 'src/decorators/pagination-query.decorator';
 import { Pagination } from 'src/decorators/pagination.decorator';
 import { JwtGuard } from 'src/guards/jwt.guard';
 import { ResponseId } from 'src/utilities/Common/schemas/id';
@@ -39,7 +39,7 @@ export class AccountsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all accounts' })
-  @PaginationQuery()
+  @ApiPaginationQuery()
   @ApiResponse({ type: [ResponseAccountItem] })
   public async getAccounts(@Pagination() pagination: PaginationParams) {
     return this.accountsService.getAccounts(pagination);

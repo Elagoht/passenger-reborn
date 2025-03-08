@@ -153,9 +153,9 @@ model Analysis {
   status  AnalysisStatus @default(IDLE)
   message String?
 
-  totalMatched Int
-  totalChecked Int
-  tookSeconds  Int
+  totalMatched    Int
+  totalChecked    Int
+  tookMiliseconds Int
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

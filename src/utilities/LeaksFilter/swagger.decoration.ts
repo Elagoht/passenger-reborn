@@ -5,7 +5,7 @@ import {
   ApiResponse,
   getSchemaPath,
 } from '@nestjs/swagger';
-import { PaginationQuery } from 'src/decorators/pagination-query.decorator';
+import { ApiPaginationQuery } from 'src/decorators/pagination-query.decorator';
 import {
   LeakFilterDto,
   SortField,
@@ -15,7 +15,7 @@ import ResponseLeakResults from 'src/resources/leaks/schemas/responses/results';
 
 export const ApiLeaksFilter = () => {
   return applyDecorators(
-    PaginationQuery(),
+    ApiPaginationQuery(),
     ApiExtraModels(LeakFilterDto, ResponseLeakResults),
     ApiQuery({
       name: 'name',

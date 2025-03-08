@@ -5,7 +5,7 @@ import { DEFAULT_PAGE, DEFAULT_TAKE, MAX_TAKE } from './pagination.decorator';
 /**
  * Decorator that adds standard pagination query parameters to Swagger documentation
  */
-export function PaginationQuery() {
+export function ApiPaginationQuery() {
   return applyDecorators(
     ApiQuery({
       name: 'page',
