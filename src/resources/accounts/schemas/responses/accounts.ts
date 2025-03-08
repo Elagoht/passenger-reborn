@@ -25,6 +25,9 @@ export class ResponseAccountItem {
   platform: string;
 
   @ApiProperty()
+  identity: string;
+
+  @ApiProperty()
   url: string;
 
   @ApiProperty({ type: String, nullable: true, required: false })

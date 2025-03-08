@@ -72,6 +72,7 @@ export class AccountsService {
           passphrase: this.crypto.encrypt(body.passphrase),
           simHash: this.crypto.generateSimhash(body.passphrase),
           platform: body.platform,
+          identity: body.identity,
           url: body.url,
           note: body.note,
           icon: body.icon,
@@ -230,6 +231,7 @@ export class AccountsService {
     return {
       id: true,
       platform: true,
+      identity: true,
       url: true,
       note: true,
       icon: true,

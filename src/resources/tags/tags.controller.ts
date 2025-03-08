@@ -8,8 +8,16 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { JwtGuard } from 'src/guards/jwt.guard';
 import { ResponseId } from 'src/utilities/Common/schemas/id';
 import RequestCreateTag from './schemas/request/create';
 import { RequestUpdateTag } from './schemas/request/update';
@@ -17,6 +25,9 @@ import { ResponseTag } from './schemas/responses/request';
 import { TagsService } from './tags.service';
 
 @Controller('tags')
+@ApiTags('Tags')
+@UseGuards(JwtGuard)
+@ApiBearerAuth()
 export class TagsController {
   public constructor(private readonly tagsService: TagsService) {}
 

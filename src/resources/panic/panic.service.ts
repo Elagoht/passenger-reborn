@@ -19,6 +19,7 @@ export class PanicService {
       select: {
         id: true,
         platform: true,
+        identity: true,
         url: true,
         note: true,
         icon: true,

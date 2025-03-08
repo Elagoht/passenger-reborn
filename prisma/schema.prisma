@@ -24,6 +24,8 @@ model Account {
   simHash    String
 
   platform String
+  // Email, Phone, Username, etc.
+  identity String
   url      String
   note     String?
   icon     String?

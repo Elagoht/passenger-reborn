@@ -7,6 +7,11 @@ class RequestCreateAccount {
   @IsNotEmpty()
   platform: string;
 
+  @ApiProperty({ example: 'hello@example.com' })
+  @IsString()
+  @IsNotEmpty()
+  identity: string;
+
   @ApiProperty({ example: 'https://example.com' })
   @IsUrl()
   @IsNotEmpty()

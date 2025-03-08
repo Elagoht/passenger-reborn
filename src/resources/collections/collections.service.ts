@@ -55,6 +55,7 @@ export class CollectionsService {
           select: {
             id: true,
             platform: true,
+            identity: true,
             url: true,
             note: true,
             icon: true,
