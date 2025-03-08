@@ -1,5 +1,5 @@
 import { ApiProperty, OmitType } from '@nestjs/swagger';
-import { ResponseAccountItem } from 'src/resources/accounts/schemas/responses/accounts';
+import { ResponseAccountCardItem } from 'src/resources/accounts/schemas/responses/accounts';
 
 export class ResponseCollection {
   @ApiProperty({ type: String })
@@ -17,8 +17,8 @@ export class ResponseCollection {
   @ApiProperty({ type: Date })
   updatedAt: Date;
 
-  @ApiProperty({ type: [ResponseAccountItem] })
-  accounts: ResponseAccountItem[];
+  @ApiProperty({ type: [ResponseAccountCardItem] })
+  accounts: ResponseAccountCardItem[];
 }
 
 export class ResponseCollectionListItem extends OmitType(ResponseCollection, [

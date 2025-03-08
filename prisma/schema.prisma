@@ -30,15 +30,16 @@ model Account {
   note     String?
   icon     String?
 
+  copiedCount  Int       @default(0)
+  lastCopiedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tags        Tag[]        @relation("AccountToTag")
+  tags        Tag[]               @relation("AccountToTag")
   collections Collection[]
-
-  history PassphraseHistory[] @relation("PassphraseHistory")
-
-  analyses Analysis[] @relation("AnalysisToAccount")
+  history     PassphraseHistory[] @relation("PassphraseHistory")
+  analyses    Analysis[]          @relation("AnalysisToAccount")
 
   @@unique([url, platform, passphrase])
   @@index([platform])

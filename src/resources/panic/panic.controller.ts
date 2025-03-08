@@ -6,7 +6,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtGuard } from 'src/guards/jwt.guard';
-import { ResponseAccountItem } from '../accounts/schemas/responses/accounts';
+import { ResponseAccountCardItem } from '../accounts/schemas/responses/accounts';
 import { PanicService } from './panic.service';
 
 @UseGuards(JwtGuard)
@@ -18,7 +18,7 @@ export class PanicController {
 
   @Get()
   @ApiOperation({ summary: 'Get all accounts tagged with panic tag' })
-  @ApiResponse({ type: ResponseAccountItem })
+  @ApiResponse({ type: ResponseAccountCardItem })
   public async getPanicAccounts() {
     return this.panicService.getPanicAccounts();
   }

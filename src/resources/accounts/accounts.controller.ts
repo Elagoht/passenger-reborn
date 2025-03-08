@@ -25,7 +25,8 @@ import { AccountsService } from './accounts.service';
 import RequestCreateAccount from './schemas/requests/create';
 import RequestUpdateAccount from './schemas/requests/update';
 import {
-  ResponseAccountItem,
+  ResponseAccount,
+  ResponseAccountCardItem,
   ResponseAccountSimilar,
 } from './schemas/responses/accounts';
 import { ResponsePassphrase } from './schemas/responses/passphrase';
@@ -40,14 +41,14 @@ export class AccountsController {
   @Get()
   @ApiOperation({ summary: 'Get all accounts' })
   @ApiPaginationQuery()
-  @ApiResponse({ type: [ResponseAccountItem] })
+  @ApiResponse({ type: [ResponseAccountCardItem] })
   public async getAccounts(@Pagination() pagination: PaginationParams) {
     return this.accountsService.getAccounts(pagination);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get an account by ID' })
-  @ApiResponse({ type: ResponseAccountItem })
+  @ApiResponse({ type: ResponseAccount })
   public async getAccountById(@Param('id') id: string) {
     return this.accountsService.getAccountById(id);
   }

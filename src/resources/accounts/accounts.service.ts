@@ -9,7 +9,8 @@ import { Strength } from 'src/utilities/Strength';
 import RequestCreateAccount from './schemas/requests/create';
 import RequestUpdateAccount from './schemas/requests/update';
 import {
-  ResponseAccountItem,
+  ResponseAccount,
+  ResponseAccountCardItem,
   ResponseAccountSimilar,
 } from './schemas/responses/accounts';
 import { ResponsePassphrase } from './schemas/responses/passphrase';
@@ -27,7 +28,7 @@ export class AccountsService {
 
   public async getAccounts(
     paginationParams: PaginationParams,
-  ): Promise<ResponseAccountItem[]> {
+  ): Promise<ResponseAccountCardItem[]> {
     const pagination = new Pagination(paginationParams);
 
     const accounts = await this.prisma.account.findMany({
@@ -46,10 +47,14 @@ export class AccountsService {
     }));
   }
 
-  public async getAccountById(id: string): Promise<ResponseAccountItem> {
+  public async getAccountById(id: string): Promise<ResponseAccount> {
     const account = await this.prisma.account.findUniqueOrThrow({
       where: { id },
-      select: this.selectStandardFields(),
+      select: {
+        ...this.selectStandardFields(),
+        copiedCount: true,
+        lastCopiedAt: true,
+      },
     });
 
     return {
@@ -66,30 +71,24 @@ export class AccountsService {
     // Calculate the strength score once to ensure consistency
     const strengthScore = Strength.evaluate(body.passphrase).score;
 
-    const result = await this.prisma.$transaction(async (prisma) => {
-      const account = await prisma.account.create({
-        data: {
-          passphrase: this.crypto.encrypt(body.passphrase),
-          simHash: this.crypto.generateSimhash(body.passphrase),
-          platform: body.platform,
-          identity: body.identity,
-          url: body.url,
-          note: body.note,
-          icon: body.icon,
-          history: {
-            create: { strength: strengthScore },
-          },
-        },
-        select: { id: true },
-      });
-
-      return account;
+    const account = await this.prisma.account.create({
+      data: {
+        passphrase: this.crypto.encrypt(body.passphrase),
+        simHash: this.crypto.generateSimhash(body.passphrase),
+        platform: body.platform,
+        identity: body.identity,
+        url: body.url,
+        note: body.note,
+        icon: body.icon,
+        history: { create: { strength: strengthScore } },
+      },
+      select: { id: true },
     });
 
     // Update the strength cache outside the transaction
     await this.graphCache.onRecordCreated(strengthScore, new Date());
 
-    return result;
+    return account;
   }
 
   public async updateAccount(
@@ -279,11 +278,15 @@ export class AccountsService {
   }
 
   public async getAccountPassphrase(id: string): Promise<ResponsePassphrase> {
-    const account = await this.prisma.account.findUniqueOrThrow({
+    const account = await this.prisma.account.update({
       where: { id },
-      select: { passphrase: true },
+      data: { copiedCount: { increment: 1 } },
+      select: { passphrase: true, copiedCount: true, lastCopiedAt: true },
     });
 
-    return { passphrase: this.crypto.decrypt(account.passphrase) };
+    return {
+      passphrase: this.crypto.decrypt(account.passphrase),
+      copiedCount: account.copiedCount,
+    };
   }
 }

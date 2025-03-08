@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { MemCacheService } from 'src/utilities/MemCache/memcache.service';
 import { PrismaService } from 'src/utilities/Prisma/prisma.service';
-import { ResponseAccountItem } from '../accounts/schemas/responses/accounts';
+import { ResponseAccountCardItem } from '../accounts/schemas/responses/accounts';
 
 @Injectable()
 export class PanicService {
@@ -10,7 +10,7 @@ export class PanicService {
     private readonly memCache: MemCacheService,
   ) {}
 
-  public async getPanicAccounts(): Promise<ResponseAccountItem[]> {
+  public async getPanicAccounts(): Promise<ResponseAccountCardItem[]> {
     const panicTagId = this.memCache.get('conf-panicTagId');
     if (!panicTagId) throw new Error('Not implemented');
 
