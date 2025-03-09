@@ -144,13 +144,7 @@ export class AnalysesService {
 
     // Start the analysis process asynchronously
     this.runAnalysis(analysis.id, wordlistId).catch((error) => {
-      void this.updateAnalysisStatus(
-        analysis.id,
-        AnalysisStatus.FAILED,
-        `Analysis failed: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`,
-      );
+      void this.handleAnalysisError(analysis.id, error);
     });
 
     return { id: analysis.id };
@@ -188,27 +182,9 @@ export class AnalysesService {
         return;
       }
 
-      // Step 1: Create a hash map of account IDs and their decrypted passwords
-      this.addLog(analysisId, 'Decrypting account passwords...');
-      const accountPasswords = new Map<string, string>();
-      const passwordToAccounts = new Map<string, string[]>();
-
-      for (const account of accounts) {
-        const decryptedPassword = this.crypto.decrypt(account.passphrase);
-        accountPasswords.set(account.id, decryptedPassword);
-
-        // Step 2: Track shared passwords
-        if (!passwordToAccounts.has(decryptedPassword)) {
-          passwordToAccounts.set(decryptedPassword, []);
-        }
-        passwordToAccounts.get(decryptedPassword)!.push(account.id);
-      }
-
-      // Step 3: Get the set of password lengths
-      const passwordLengths = new Set<number>();
-      accountPasswords.forEach((password) => {
-        passwordLengths.add(password.length);
-      });
+      // Extract password processing to a separate method
+      const { accountPasswords, passwordToAccounts, passwordLengths } =
+        this.processAccountPasswords(analysisId, accounts);
 
       // Get wordlist details
       const wordlist = await this.prisma.wordlist.findUniqueOrThrow({
@@ -222,92 +198,15 @@ export class AnalysesService {
         }`,
       );
 
-      // Track matched accounts
-      const matchedAccountIds = new Set<string>();
-      let totalChecked = 0;
-
-      // Step 4: Process each password length file in the wordlist
-      for (const passwordLength of passwordLengths) {
-        // Skip if outside the range of the wordlist
-        if (
-          passwordLength < wordlist.minLength ||
-          passwordLength > wordlist.maxLength
-        ) {
-          this.addLog(
-            analysisId,
-            `Skipping passwords of length ${passwordLength} (outside wordlist range)`,
-          );
-          continue;
-        }
-
-        this.addLog(
+      // Extract wordlist checking logic to a separate method
+      const { matchedAccountIds, totalChecked } =
+        await this.checkPasswordsAgainstWordlist(
           analysisId,
-          `Processing passwords of length ${passwordLength}...`,
+          wordlist,
+          passwordLengths,
+          accountPasswords,
+          passwordToAccounts,
         );
-
-        try {
-          // Read the wordlist file for this length
-          const filePath = join(
-            cwd(),
-            'data',
-            'wordlists',
-            wordlist.slug,
-            'data',
-            `${passwordLength}.ticket`,
-          );
-
-          const fileContent = await readFile(filePath, 'utf-8');
-          const wordlistPasswords = fileContent.split('\n').filter(Boolean);
-
-          totalChecked += wordlistPasswords.length;
-
-          // Get unique passwords of this length from our accounts
-          const uniqueAccountPasswords = new Set<string>();
-          accountPasswords.forEach((password) => {
-            if (password.length === passwordLength) {
-              uniqueAccountPasswords.add(password);
-            }
-          });
-
-          // Only log if there are passwords to check
-          if (uniqueAccountPasswords.size > 0) {
-            this.addLog(
-              analysisId,
-              `Checking ${uniqueAccountPasswords.size} unique passwords against ${wordlistPasswords.length} wordlist entries`,
-            );
-          }
-
-          // Check each unique account password using binary search
-          for (const accountPassword of uniqueAccountPasswords) {
-            // Perform binary search on the wordlist
-            const found = this.binarySearch(wordlistPasswords, accountPassword);
-
-            if (found) {
-              const affectedAccounts = passwordToAccounts.get(accountPassword)!;
-
-              // Create a masked version of the password for logging
-              const maskedPassword = this.maskPassword(accountPassword);
-
-              this.addLog(
-                analysisId,
-                `Found match: "${maskedPassword}" used by ${affectedAccounts.length} account(s)`,
-              );
-
-              // Add all affected accounts to the matched set
-              affectedAccounts.forEach((accountId) => {
-                matchedAccountIds.add(accountId);
-              });
-            }
-          }
-        } catch (error) {
-          this.addLog(
-            analysisId,
-            `Error processing passwords of length ${passwordLength}: ${
-              error instanceof Error ? error.message : 'Unknown error'
-            }`,
-          );
-        }
-      }
 
       // Step 6-9: Complete the analysis
       const endTime = Date.now();
@@ -336,16 +235,175 @@ export class AnalysesService {
         } vulnerable accounts out of ${accounts.length} total accounts.`,
       );
     } catch (error) {
-      await this.updateAnalysisStatus(
-        analysisId,
-        AnalysisStatus.FAILED,
-        `Analysis failed: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`,
-      );
+      await this.handleAnalysisError(analysisId, error);
       throw error;
     } finally {
       this.activeAnalysisId = null;
+    }
+  }
+
+  /**
+   * Process account passwords to create necessary data structures for analysis
+   */
+  private processAccountPasswords(
+    analysisId: string,
+    accounts: { id: string; passphrase: string }[],
+  ) {
+    this.addLog(analysisId, 'Decrypting account passwords...');
+    const accountPasswords = new Map<string, string>();
+    const passwordToAccounts = new Map<string, string[]>();
+    const passwordLengths = new Set<number>();
+
+    for (const account of accounts) {
+      const decryptedPassword = this.crypto.decrypt(account.passphrase);
+      accountPasswords.set(account.id, decryptedPassword);
+      passwordLengths.add(decryptedPassword.length);
+
+      // Track shared passwords
+      if (!passwordToAccounts.has(decryptedPassword)) {
+        passwordToAccounts.set(decryptedPassword, []);
+      }
+      passwordToAccounts.get(decryptedPassword)!.push(account.id);
+    }
+
+    return { accountPasswords, passwordToAccounts, passwordLengths };
+  }
+
+  /**
+   * Check passwords against wordlist files
+   */
+  private async checkPasswordsAgainstWordlist(
+    analysisId: string,
+    wordlist: {
+      id: string;
+      displayName: string;
+      slug: string;
+      minLength: number;
+      maxLength: number;
+    },
+    passwordLengths: Set<number>,
+    accountPasswords: Map<string, string>,
+    passwordToAccounts: Map<string, string[]>,
+  ): Promise<{ matchedAccountIds: Set<string>; totalChecked: number }> {
+    const matchedAccountIds = new Set<string>();
+    let totalChecked = 0;
+
+    // Process each password length file in the wordlist
+    for (const passwordLength of passwordLengths) {
+      // Skip if outside the range of the wordlist
+      if (
+        passwordLength < wordlist.minLength ||
+        passwordLength > wordlist.maxLength
+      ) {
+        this.addLog(
+          analysisId,
+          `Skipping passwords of length ${passwordLength} (outside wordlist range)`,
+        );
+        continue;
+      }
+
+      this.addLog(
+        analysisId,
+        `Processing passwords of length ${passwordLength}...`,
+      );
+
+      try {
+        // Read the wordlist file for this length
+        const filePath = join(
+          cwd(),
+          'data',
+          'wordlists',
+          wordlist.slug,
+          'data',
+          `${passwordLength}.ticket`,
+        );
+
+        const fileContent = await readFile(filePath, 'utf-8');
+        const wordlistPasswords = fileContent.split('\n').filter(Boolean);
+
+        totalChecked += wordlistPasswords.length;
+
+        // Get unique passwords of this length from our accounts
+        const uniqueAccountPasswords = this.getUniquePasswordsOfLength(
+          accountPasswords,
+          passwordLength,
+        );
+
+        // Only log if there are passwords to check
+        if (uniqueAccountPasswords.size > 0) {
+          this.addLog(
+            analysisId,
+            `Checking ${uniqueAccountPasswords.size} unique passwords against ${wordlistPasswords.length} wordlist entries`,
+          );
+        }
+
+        // Check each unique account password using binary search
+        this.checkUniquePasswordsAgainstWordlist(
+          analysisId,
+          uniqueAccountPasswords,
+          wordlistPasswords,
+          passwordToAccounts,
+          matchedAccountIds,
+        );
+      } catch (error) {
+        this.addLog(
+          analysisId,
+          `Error processing passwords of length ${passwordLength}: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`,
+        );
+      }
+    }
+
+    return { matchedAccountIds, totalChecked };
+  }
+
+  /**
+   * Get unique passwords of a specific length from account passwords
+   */
+  private getUniquePasswordsOfLength(
+    accountPasswords: Map<string, string>,
+    length: number,
+  ): Set<string> {
+    const uniquePasswords = new Set<string>();
+    accountPasswords.forEach((password) => {
+      if (password.length === length) {
+        uniquePasswords.add(password);
+      }
+    });
+    return uniquePasswords;
+  }
+
+  /**
+   * Check unique passwords against wordlist entries
+   */
+  private checkUniquePasswordsAgainstWordlist(
+    analysisId: string,
+    uniquePasswords: Set<string>,
+    wordlistPasswords: string[],
+    passwordToAccounts: Map<string, string[]>,
+    matchedAccountIds: Set<string>,
+  ): void {
+    for (const password of uniquePasswords) {
+      // Perform binary search on the wordlist
+      const found = this.binarySearch(wordlistPasswords, password);
+
+      if (found) {
+        const affectedAccounts = passwordToAccounts.get(password)!;
+
+        // Create a masked version of the password for logging
+        const maskedPassword = this.maskPassword(password);
+
+        this.addLog(
+          analysisId,
+          `Found match: "${maskedPassword}" used by ${affectedAccounts.length} account(s)`,
+        );
+
+        // Add all affected accounts to the matched set
+        affectedAccounts.forEach((accountId) => {
+          matchedAccountIds.add(accountId);
+        });
+      }
     }
   }
 
@@ -398,12 +456,28 @@ export class AnalysesService {
     // Get the logs for this analysis
     const logs = this.getAnalysisLogs(id);
 
-    // Extract progress information from logs if available
+    // Extract progress information from logs
+    const progress = this.extractProgressFromLogs(logs);
+
+    return {
+      id,
+      isActive: this.activeAnalysisId === id,
+      progress,
+      logs,
+    };
+  }
+
+  /**
+   * Extract progress information from analysis logs
+   */
+  private extractProgressFromLogs(logs: string[]): {
+    totalMatched: number;
+    totalChecked: number;
+  } {
     let totalMatched = 0;
     let totalChecked = 0;
 
     // Parse logs to extract progress information
-    // This avoids database queries during active analysis
     for (const log of logs) {
       const matchedMatch = log.match(/Found match.*used by (\d+) account/);
       if (matchedMatch) {
@@ -416,15 +490,7 @@ export class AnalysesService {
       }
     }
 
-    return {
-      id,
-      isActive: this.activeAnalysisId === id,
-      progress: {
-        totalMatched,
-        totalChecked,
-      },
-      logs,
-    };
+    return { totalMatched, totalChecked };
   }
 
   public async stopAnalysis(id: string): Promise<void> {
@@ -479,5 +545,22 @@ export class AnalysesService {
     const middleAsterisks = '*'.repeat(Math.min(password.length - 2, 6));
 
     return `${firstChar}${middleAsterisks}${lastChar}`;
+  }
+
+  /**
+   * Handle analysis errors consistently
+   */
+  private async handleAnalysisError(
+    analysisId: string,
+    error: unknown,
+  ): Promise<void> {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    await this.updateAnalysisStatus(
+      analysisId,
+      AnalysisStatus.FAILED,
+      `Analysis failed: ${errorMessage}`,
+    );
+    this.addLog(analysisId, `Error occurred: ${errorMessage}`);
   }
 }
