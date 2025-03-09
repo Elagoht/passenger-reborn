@@ -5,9 +5,11 @@ import {
   Post,
   Query,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiConsumes,
   ApiOperation,
@@ -15,6 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { JwtGuard } from 'src/guards/jwt.guard';
 import { CsvImportFileInterceptor } from 'src/interceptors/csv-import-file.interceptor';
 import { ExportFormat } from './schemas/requests/export';
 import { ImportConflictHandling } from './schemas/requests/import';
@@ -26,6 +29,8 @@ import { TransferService } from './transfer.service';
 
 @Controller('transfer')
 @ApiTags('Transfer')
+@ApiBearerAuth()
+@UseGuards(JwtGuard)
 export class TransferController {
   constructor(private readonly transferService: TransferService) {}
 
