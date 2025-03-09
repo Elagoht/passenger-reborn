@@ -13,6 +13,7 @@ import { PanicModule } from './panic/panic.module';
 import { PreferencesModule } from './preferences/preferences.module';
 import { StatsModule } from './stats/stats.module';
 import { TagsModule } from './tags/tags.module';
+import { TransferModule } from './transfer/transfer.module';
 import { WordListsModule } from './wordlists/wordlists.module';
 
 @Module({
@@ -31,6 +32,7 @@ import { WordListsModule } from './wordlists/wordlists.module';
     PrismaModule,
     StatsModule,
     TagsModule,
+    TransferModule,
     WordListsModule,
   ],
   controllers: [],
