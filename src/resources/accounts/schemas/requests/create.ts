@@ -24,18 +24,20 @@ class RequestCreateAccount {
 
   @ApiProperty({
     example: 'People do not know that domain has a login feature!',
+    nullable: true,
   })
   @IsString()
   @IsOptional()
-  note: string;
+  note: string | null;
 
   @ApiProperty({
     description:
       'Unless provided, icon.horse api will be used to generate a random icon',
     example: 'https://example.com/icon.png',
+    nullable: true,
   })
   @IsString()
   @IsOptional()
-  icon: string;
+  icon: string | null;
 }
 export default RequestCreateAccount;

@@ -41,7 +41,7 @@ model Account {
   history     PassphraseHistory[] @relation("PassphraseHistory")
   analyses    Analysis[]          @relation("AnalysisToAccount")
 
-  @@unique([url, platform, passphrase])
+  @@unique([url, platform, identity])
   @@index([platform])
   @@index([simHash])
 }
