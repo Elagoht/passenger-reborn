@@ -1,99 +1,118 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+<div align="center">
+<img src="https://raw.githubusercontent.com/Elagoht/Passenger-Landing/main/public/assets/logo.png" width="192" height="192" />
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+# Passenger: Self-Hosted Passphrase Manager
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+*<big>Because your security shouldn't be a passenger in someone else's vehicle.</big>*
 
-## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
-## Project setup
+[![Docker Compose](https://img.shields.io/badge/Docker-Compose-blue)](https://docs.docker.com/compose/)
+  ![Nest.js](https://img.shields.io/badge/Backend-Nest.js-red)
+![GitHub Repo stars](https://img.shields.io/github/stars/Elagoht/Passenger-reborn?style=flat)
+![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/Elagoht/Passenger-reborn)
+![GitHub Issues or Pull Requests](https://img.shields.io/github/issues-pr/Elagoht/Passenger-reborn)
+![GitHub License](https://img.shields.io/github/license/Elagoht/Passenger-reborn)
+
+**This repository is the backend of the Passenger project.**
+</div>
+
+Passenger is a zero-trust, self-hosted passphrase manager that puts you in complete control of your security. Unlike traditional password managers, Passenger focuses on passphrases (in terms of "words") - longer, more secure combinations of words and characters that provide significantly better protection than single-word passwords.
+
+## Why Passenger?
+
+In a world where data breaches are common, trusting third-party services with your most sensitive credentials is risky. Passenger eliminates this concern by allowing you to host your own passphrase management system on your infrastructure. Access your credentials securely from anywhere while maintaining complete ownership of your data.
+
+## Key Features
+
+### 🔒 Zero-Trust Architecture
+
+- Self-hosted solution that never sends your master passphrase to any server
+- All encryption/decryption happens locally on your device
+- No tracking, no telemetry, complete privacy
+
+### 📊 Advanced Security Analysis
+
+- Import brute force wordlists from community repositories
+- Run local analyses against your stored accounts to identify vulnerable credentials
+- Proactively identify weak passphrases before attackers do
+
+### 🔄 Seamless Migration
+
+- Import credentials from popular browsers (Chrome, Firefox) and password managers (1Password, LastPass)
+- Export your data in various formats for backup or migration
+- Never get locked into a single ecosystem
+
+### 📱 Mobility Without Compromise
+
+- Access your passphrases securely from any device
+- Synchronize your credentials without relying on third-party cloud services
+- Take your security with you wherever you go
+
+### 🧠 Intelligent Security Features
+
+- Passphrase strength assessment with detailed scoring
+- Uniqueness checking to prevent password reuse
+- Similarity detection to identify patterns in your credentials
+- Tag system for easy organization and identification of sensitive accounts
+
+### 🔍 Breach Detection
+
+- Check if your credentials have been exposed in known data breaches
+- Receive alerts about potentially compromised accounts
+- Take immediate action to secure affected accounts
+
+## Getting Started with Docker
+
+The easiest way to get started with Passenger is using Docker:
+
+1. Clone the repository:
 
 ```bash
-$ npm install
+git clone https://github.com/Elagoht/passenger-reborn.git
+cd passenger-reborn
 ```
 
-## Compile and run the project
+2. Configure your environment variables:
+
+Create a `.env` file respecting the `env.example` file.
+
+3. Build and start the container:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+docker-compose up -d
 ```
 
-## Run tests
+4. Access Passenger at http://localhost:13541
 
-```bash
-# unit tests
-$ npm run test
+## Security Recommendations
 
-# e2e tests
-$ npm run test:e2e
+- 🌐 Use a VPN to connect to your server
+- 🔑 Use a strong master passphrase that you don't use anywhere else
+- 🔄 Keep your server updated with the latest security patches
+- 🔒 Consider setting up HTTPS with a reverse proxy like Nginx or Traefik
+- 📦 Regularly backup your database
+- 🔍 Run periodic security analyses to identify weak credentials
 
-# test coverage
-$ npm run test:cov
-```
+## Why "Passphrases" Instead of "Passwords"?
 
-## Deployment
+Traditional passwords (single words with some numbers or special characters) are increasingly vulnerable to modern cracking techniques. Passphrases - longer combinations of words and characters - provide exponentially more security. Passenger is designed with this security-first mindset, encouraging the use of strong passphrases rather than simple passwords.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Technical Features
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- Built with NestJS for a robust, scalable backend
+- RESTful API with comprehensive Swagger documentation
+- JWT-based authentication
+- Prisma ORM for type-safe database access
+- Advanced cryptographic functions for secure passphrase storage
+- Support for importing custom wordlists for security analysis
+- Collection and tag management for organizing credentials
+- Comprehensive statistics and security reporting
 
-```bash
-$ npm install -g mau
-$ mau deploy
-```
+## Contributing
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Contributions are welcome! Whether you're fixing bugs, improving documentation, or proposing new features, your help makes Passenger better for everyone. Please see our [code of conduct](CODE_OF_CONDUCT.md) for more information.
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Passenger is licensed under the GPL-3.0 license. See the [LICENSE](LICENSE) file for details.

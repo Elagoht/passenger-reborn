@@ -1,0 +1,11 @@
+.vscode
+node_modules
+npm-debug.log
+dist
+.git
+.github
+.vscode
+coverage
+.env.*
+data
+README.md
