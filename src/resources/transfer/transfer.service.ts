@@ -10,6 +10,10 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { CryptoService } from 'src/utilities/Crypto/crypto.service';
 import CSV from 'src/utilities/CSV';
+import OnePasswordCSVExporter from 'src/utilities/CSVExporter/1PasswordCSVExporter';
+import ChromiumCSVExporter from 'src/utilities/CSVExporter/ChromiumCSVExporter';
+import FirefoxCSVExporter from 'src/utilities/CSVExporter/FirefoxCSVExporter';
+import LastPassCSVExporter from 'src/utilities/CSVExporter/LastPassCSVExporter';
 import CSVImporter from 'src/utilities/CSVImporter';
 import OnePasswordCSVImporter from 'src/utilities/CSVImporter/1PasswordCSVImporter';
 import ChromeCSVImporter from 'src/utilities/CSVImporter/ChromiumCSVImporter';
@@ -18,6 +22,7 @@ import LastPassCSVImporter from 'src/utilities/CSVImporter/LastPassCSVImporter';
 import { PrismaService } from 'src/utilities/Prisma/prisma.service';
 import { promisify } from 'util';
 import RequestCreateAccount from '../accounts/schemas/requests/create';
+import { ExportFormat } from './schemas/requests/export';
 import { ImportConflictHandling } from './schemas/requests/import';
 
 @Injectable()
@@ -27,6 +32,13 @@ export class TransferService {
     Chrome: ChromeCSVImporter,
     LastPass: LastPassCSVImporter,
     OnePassword: OnePasswordCSVImporter,
+  } as const;
+
+  private readonly exporters = {
+    [ExportFormat.FIREFOX]: FirefoxCSVExporter,
+    [ExportFormat.CHROME]: ChromiumCSVExporter,
+    [ExportFormat.LASTPASS]: LastPassCSVExporter,
+    [ExportFormat.ONEPASSWORD]: OnePasswordCSVExporter,
   } as const;
 
   constructor(
@@ -46,18 +58,24 @@ export class TransferService {
     return this.processImportRequests(requests, strategy);
   }
 
-  public async export() {
-    const accounts = await this.prisma.account.findMany({
-      select: { identity: true, url: true, platform: true, passphrase: true },
-    });
+  public async export(format: ExportFormat) {
+    const accounts = await this.prisma.account.findMany();
 
+    // Decrypt the passphrases
     const decryptedAccounts = accounts.map((account) => ({
       ...account,
       passphrase: this.cryptoService.decrypt(account.passphrase),
     }));
 
-    const csv = new CSV(decryptedAccounts);
-    return csv.toString();
+    // Get the appropriate exporter
+    const ExporterClass = this.exporters[format];
+    if (!ExporterClass) {
+      throw new BadRequestException(`Unsupported export format: ${format}`);
+    }
+
+    // Create the exporter and export the data
+    const exporter = new ExporterClass(decryptedAccounts);
+    return exporter.export();
   }
 
   private async processImportRequests(

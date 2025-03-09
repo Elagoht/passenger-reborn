@@ -16,6 +16,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CsvImportFileInterceptor } from 'src/interceptors/csv-import-file.interceptor';
+import { ExportFormat } from './schemas/requests/export';
 import { ImportConflictHandling } from './schemas/requests/import';
 import {
   ImportResponseConflict,
@@ -71,7 +72,23 @@ export class TransferController {
   @Post('export')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Export data to CSV format' })
-  export() {
-    return this.transferService.export();
+  @ApiQuery({
+    name: 'format',
+    enum: ExportFormat,
+    description: 'Format to export data to',
+    required: true,
+    example: ExportFormat.CHROME,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Export successful',
+    schema: {
+      type: 'string',
+      format: 'text/csv',
+      description: 'CSV file containing exported account data',
+    },
+  })
+  export(@Query('format') format: ExportFormat) {
+    return this.transferService.export(format);
   }
 }
