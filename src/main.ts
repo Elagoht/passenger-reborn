@@ -7,6 +7,13 @@ import { Environment } from './utilities/Environment';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Enable CORS
+  app.enableCors({
+    origin: Environment.CORS_ORIGIN.split(','),
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    credentials: true,
+  });
+
   app.useGlobalPipes(validationPipe);
   app.useGlobalInterceptors(new PrismaErrorInterceptor());
 
