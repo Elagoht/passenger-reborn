@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { sign } from 'jsonwebtoken';
 import { CryptoService } from 'src/utilities/Crypto/crypto.service';
-import Environment from 'src/utilities/Environment';
+import { Environment } from 'src/utilities/Environment';
 import { PrismaService } from 'src/utilities/Prisma/prisma.service';
 import { RequestChangePassphrase } from './schemas/requests/change';
 import RequestInitialize from './schemas/requests/initialize';

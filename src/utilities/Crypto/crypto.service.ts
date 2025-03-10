@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
-import Environment from '../Environment';
+import { Environment } from '../Environment';
 
 @Injectable()
 export class CryptoService {

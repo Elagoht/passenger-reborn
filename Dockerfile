@@ -15,7 +15,7 @@ RUN npx prisma generate
 RUN npx prisma db push
 RUN npx prisma db seed
 
-# Build the application
+# Build the optimized application
 RUN npm run build
 
 # Install only production dependencies
@@ -43,4 +43,4 @@ COPY --from=build /app/node_modules ./node_modules
 EXPOSE 13541
 
 # Run the application with Node.js directly
-CMD ["node", "dist/src/main.js"]
+CMD ["node", "dist/main.js"]
