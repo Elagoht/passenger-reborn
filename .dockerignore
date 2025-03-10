@@ -2,9 +2,13 @@ node_modules
 npm-debug.log
 dist
 .git
+.gitignore
 .github
 .vscode
 coverage
 .env.*
 data
 README.md
+eslint.config.js
+.prettierrc
+CODE_OF_CONDUCT.md

@@ -1,4 +1,7 @@
 version: '3'
+volumes:
+  prisma_data:
+  data:
 
 services:
   app:
@@ -8,5 +11,5 @@ services:
     ports:
       - "13541:13541"
     volumes:
-      - ./data:/app/data
-      - ./prisma:/app/prisma
+      - prisma_data:/app/prisma/data
+      - data:/app/data
