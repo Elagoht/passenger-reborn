@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3'
 
 services:
   app:
@@ -7,11 +7,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "13541:13541"
-    environment:
-      - PORT=13541
-      - JWT_SECRET=your_jwt_secret_here
-      - ENCRYPTION_KEY=your_encryption_key_here
     volumes:
       - ./data:/app/data
       - ./prisma:/app/prisma
-    restart: unless-stopped
