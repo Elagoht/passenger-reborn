@@ -9,11 +9,12 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: Environment.CORS_ORIGIN.split(','),
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    origin: true,
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Origin', 'X-Requested-With', 'Accept', 'Authorization'],
+    exposedHeaders: ['Authorization'],
     credentials: true,
   });
-
   app.useGlobalPipes(validationPipe);
   app.useGlobalInterceptors(new PrismaErrorInterceptor());
 
