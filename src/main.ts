@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { RateLimiterGuard } from './guards/rate-limiter.guard';
 import { PrismaErrorInterceptor } from './interceptors/prisma-error.interceptor';
 import validationPipe from './pipes/validation';
 import { AppModule } from './resources/app.module';
@@ -22,6 +23,7 @@ async function bootstrap() {
     exposedHeaders: ['Authorization'],
     credentials: true,
   });
+  app.useGlobalGuards(new RateLimiterGuard());
   app.useGlobalPipes(validationPipe);
   app.useGlobalInterceptors(new PrismaErrorInterceptor());
 
