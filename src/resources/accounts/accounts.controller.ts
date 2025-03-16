@@ -70,7 +70,6 @@ export class AccountsController {
   }
 
   @Delete(':id')
-  @HttpCode(204)
   @ApiOperation({ summary: 'Delete an account by ID' })
   @HttpCode(HttpStatus.NO_CONTENT)
   public async deleteAccount(@Param('id') id: string) {
