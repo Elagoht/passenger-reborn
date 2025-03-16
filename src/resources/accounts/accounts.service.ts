@@ -91,20 +91,31 @@ export class AccountsService {
     return account;
   }
 
-  public async updateAccount(
-    id: string,
-    body: RequestUpdateAccount,
-  ): Promise<void> {
-    /**
-     * If the passphrase is not provided
-     * we can just update the account
-     * Trying to escape extra database calls
-     */
+  public async updateAccount(id: string, body: RequestUpdateAccount) {
+    const existingAccount = await this.prisma.account.findUniqueOrThrow({
+      where: { id },
+      select: {
+        platform: true,
+        identity: true,
+        url: true,
+        note: true,
+        icon: true,
+      },
+    });
+
+    // Delete non-updated fields
+    Object.keys(existingAccount).forEach((key) => {
+      if (existingAccount[key] === body[key]) {
+        delete body[key];
+      }
+    });
+
     if (!body.passphrase) {
       await this.prisma.account.update({
         where: { id },
         data: {
           platform: body.platform,
+          identity: body.identity,
           url: body.url,
           note: body.note,
           icon: body.icon,
@@ -122,7 +133,13 @@ export class AccountsService {
     // Otherwise, we just update the account
     await this.prisma.account.update({
       where: { id },
-      data: { platform: body.platform, note: body.note, icon: body.icon },
+      data: {
+        platform: body.platform,
+        identity: body.identity,
+        url: body.url,
+        note: body.note,
+        icon: body.icon,
+      },
     });
   }
 
@@ -212,7 +229,13 @@ export class AccountsService {
       select: { passphrase: true },
     });
 
-    return this.crypto.decrypt(existingAccount.passphrase) !== newPassphrase;
+    const valueToDecrypt = existingAccount.passphrase;
+
+    if (!valueToDecrypt) throw new Error('No value to decrypt');
+
+    const decryptedValue = this.crypto.decrypt(valueToDecrypt);
+
+    return decryptedValue !== newPassphrase;
   }
 
   private selectTagFields() {
@@ -243,44 +266,51 @@ export class AccountsService {
     passphrase: string,
     body: RequestUpdateAccount,
   ) {
-    await this.prisma.$transaction(async (prisma) => {
-      // Find the last history record
-      const lastHistory = await prisma.passphraseHistory.findFirstOrThrow({
-        where: { accountId: id, deletedAt: null },
-        orderBy: { createdAt: 'desc' },
-      });
+    const strength = Strength.evaluate(passphrase).score;
+    const { updatedAccount, lastHistory } = await this.prisma.$transaction(
+      async (prisma) => {
+        // Find the last history record
+        const lastHistory = await prisma.passphraseHistory.findFirstOrThrow({
+          where: { accountId: id },
+          orderBy: { createdAt: 'desc' },
+        });
 
-      const strength = Strength.evaluate(passphrase).score;
-      await prisma.account.update({
-        where: { id },
-        data: {
-          passphrase: this.crypto.encrypt(passphrase),
-          simHash: this.crypto.generateSimhash(passphrase),
-          platform: body.platform,
-          note: body.note,
-          icon: body.icon,
-          history: {
-            create: { strength },
-            updateMany: {
-              // Soft delete the last history record
-              where: { deletedAt: null },
-              data: { deletedAt: new Date() },
+        const updatedAccount = await prisma.account.update({
+          where: { id },
+          data: {
+            platform: body.platform,
+            identity: body.identity,
+            url: body.url,
+            note: body.note,
+            icon: body.icon,
+            passphrase: this.crypto.encrypt(passphrase),
+            simHash: this.crypto.generateSimhash(passphrase),
+            history: {
+              create: { strength },
+              updateMany: {
+                // Soft delete the last history record
+                where: { deletedAt: null },
+                data: { deletedAt: new Date() },
+              },
             },
           },
-        },
-      });
+        });
+        return { updatedAccount, lastHistory };
+      },
+    );
 
-      // Update the strength cache
-      const now = new Date();
-      await this.graphCache.onRecordDeleted(lastHistory.strength, now);
-      await this.graphCache.onRecordCreated(strength, now);
-    });
+    // Move cache updates outside of the transaction
+    const now = new Date();
+    await this.graphCache.onRecordDeleted(lastHistory.strength, now);
+    await this.graphCache.onRecordCreated(strength, now);
+
+    return updatedAccount;
   }
 
   public async getAccountPassphrase(id: string): Promise<ResponsePassphrase> {
     const account = await this.prisma.account.update({
       where: { id },
-      data: { copiedCount: { increment: 1 }, lastCopiedAt: new Date() },
+      data: { copiedCount: { increment: 1 } },
       select: { passphrase: true, copiedCount: true, lastCopiedAt: true },
     });
 
