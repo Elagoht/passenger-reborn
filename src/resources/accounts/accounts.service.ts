@@ -280,7 +280,7 @@ export class AccountsService {
   public async getAccountPassphrase(id: string): Promise<ResponsePassphrase> {
     const account = await this.prisma.account.update({
       where: { id },
-      data: { copiedCount: { increment: 1 } },
+      data: { copiedCount: { increment: 1 }, lastCopiedAt: new Date() },
       select: { passphrase: true, copiedCount: true, lastCopiedAt: true },
     });
 
