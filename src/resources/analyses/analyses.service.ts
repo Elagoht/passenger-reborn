@@ -31,7 +31,7 @@
  * 9. Return the analysis report
  */
 
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { AnalysisStatus, WordlistStatus } from '@prisma/client';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
@@ -419,7 +419,7 @@ export class AnalysesService {
     }
 
     this.logs.get(analysisId)!.push(logEntry);
-    console.log(`Analysis ${analysisId}: ${message}`);
+    Logger.log(`Analysis ${analysisId}: ${message}`);
   }
 
   /**

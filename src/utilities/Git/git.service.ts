@@ -37,10 +37,9 @@ export class GitService {
       }
     });
 
-    cloneProcess.on('error', (err) => {
+    cloneProcess.on('error', () => {
       this.activeClones.delete(path);
       onFail?.();
-      console.error('Git clone error: ', err);
     });
   }
 
@@ -67,8 +66,7 @@ export class GitService {
       this.activeClones.delete(path);
 
       return true;
-    } catch (error) {
-      console.error('Failed to cancel clone:', error);
+    } catch {
       return false;
     }
   }
@@ -96,7 +94,7 @@ export class GitService {
       const fullPath = join(cwd(), 'data', path);
       const stats = await stat(fullPath);
       return stats.isDirectory();
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -135,7 +133,7 @@ export class GitService {
           }
         });
       });
-    } catch (error) {
+    } catch {
       return false;
     }
   }

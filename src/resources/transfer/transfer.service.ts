@@ -192,13 +192,12 @@ export class TransferService {
   private detectImporter(csv: CSV): CSVImporter {
     const headers = new Set(csv.getHeaders());
 
-    for (const [name, Importer] of Object.entries(this.importers)) {
+    for (const [, Importer] of Object.entries(this.importers)) {
       try {
         const instance = new Importer(csv);
         const requiredHeaders = instance.getRequiredHeaders();
 
         if (requiredHeaders.every((header) => headers.has(header))) {
-          console.log(`Detected importer: ${name}`);
           return instance;
         }
       } catch {

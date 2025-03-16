@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { PrismaErrorInterceptor } from './interceptors/prisma-error.interceptor';
 import validationPipe from './pipes/validation';
@@ -11,7 +12,13 @@ async function bootstrap() {
   app.enableCors({
     origin: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Origin', 'X-Requested-With', 'Accept', 'Authorization'],
+    allowedHeaders: [
+      'Content-Type',
+      'Origin',
+      'X-Requested-With',
+      'Accept',
+      'Authorization',
+    ],
     exposedHeaders: ['Authorization'],
     credentials: true,
   });
@@ -22,7 +29,7 @@ async function bootstrap() {
   if (Environment.NODE_ENV !== 'production') {
     await import('./utilities/Swagger')
       .then(({ createSwaggerConfig }) => createSwaggerConfig(app))
-      .catch((error) => console.warn('Failed to load Swagger:', error));
+      .catch((error) => Logger.warn('Failed to load Swagger:', error));
   }
 
   await app.listen(Environment.PORT);
