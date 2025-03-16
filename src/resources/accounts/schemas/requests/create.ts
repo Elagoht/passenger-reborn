@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsUrlWithPort } from 'src/decorators/is-url-with-ports.decorator';
 
 class RequestCreateAccount {
   @ApiProperty({ example: 'Example' })
@@ -13,7 +14,7 @@ class RequestCreateAccount {
   identity: string;
 
   @ApiProperty({ example: 'https://example.com' })
-  @IsUrl()
+  @IsUrlWithPort()
   @IsNotEmpty()
   url: string;
 
