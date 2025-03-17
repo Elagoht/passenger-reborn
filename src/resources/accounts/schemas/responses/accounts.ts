@@ -46,6 +46,9 @@ export class ResponseAccount extends ResponseAccountCardItem {
 
   @ApiProperty({ type: Date, nullable: true, required: false })
   lastCopiedAt: Date | null;
+
+  @ApiProperty({ type: String, nullable: true, required: false })
+  passphrase: string | null;
 }
 
 export class ResponseAccountSimilar extends ResponseAccountCardItem {

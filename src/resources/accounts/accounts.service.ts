@@ -54,11 +54,21 @@ export class AccountsService {
         ...this.selectStandardFields(),
         copiedCount: true,
         lastCopiedAt: true,
+        passphrase: true,
+      },
+    });
+
+    await this.prisma.account.update({
+      where: { id },
+      data: {
+        copiedCount: { increment: 1 },
+        lastCopiedAt: new Date(),
       },
     });
 
     return {
       ...account,
+      passphrase: this.crypto.decrypt(account.passphrase),
       tags: account.tags.map((tag) => ({
         ...tag,
         isPanic:
@@ -310,7 +320,10 @@ export class AccountsService {
   public async getAccountPassphrase(id: string): Promise<ResponsePassphrase> {
     const account = await this.prisma.account.update({
       where: { id },
-      data: { copiedCount: { increment: 1 } },
+      data: {
+        copiedCount: { increment: 1 },
+        lastCopiedAt: new Date(),
+      },
       select: { passphrase: true, copiedCount: true, lastCopiedAt: true },
     });
 
