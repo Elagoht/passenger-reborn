@@ -22,7 +22,6 @@ export class PanicService {
         identity: true,
         url: true,
         note: true,
-        icon: true,
         tags: { select: { id: true, name: true, icon: true, color: true } },
       },
     });

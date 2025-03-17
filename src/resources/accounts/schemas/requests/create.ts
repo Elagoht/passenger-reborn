@@ -30,15 +30,5 @@ class RequestCreateAccount {
   @IsString()
   @IsOptional()
   note: string | null;
-
-  @ApiProperty({
-    description:
-      'Unless provided, icon.horse api will be used to generate a random icon',
-    example: 'https://example.com/icon.png',
-    nullable: true,
-  })
-  @IsString()
-  @IsOptional()
-  icon: string | null;
 }
 export default RequestCreateAccount;

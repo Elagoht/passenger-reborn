@@ -24,7 +24,6 @@ class FirefoxCSVImporter extends CSVImporter {
       url: row.url,
       passphrase: row.password,
       note: row.httpRealm,
-      icon: null,
     };
   }
 }

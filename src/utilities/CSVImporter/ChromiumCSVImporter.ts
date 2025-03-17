@@ -16,7 +16,6 @@ class ChromeCSVImporter extends CSVImporter {
       url: row.url,
       passphrase: row.password,
       note: null,
-      icon: null,
     };
   }
 }

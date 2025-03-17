@@ -28,7 +28,6 @@ model Account {
   identity String
   url      String
   note     String?
-  icon     String?
 
   copiedCount  Int       @default(0)
   lastCopiedAt DateTime?

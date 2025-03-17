@@ -27,9 +27,6 @@ export class ResponseAccountCardItem {
   @ApiProperty()
   identity: string;
 
-  @ApiProperty({ type: String, nullable: true, required: false })
-  icon: string | null;
-
   @ApiProperty({ type: [TagBadgeItem] })
   tags: TagBadgeItem[];
 

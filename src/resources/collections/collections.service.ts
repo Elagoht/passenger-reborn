@@ -58,7 +58,6 @@ export class CollectionsService {
             identity: true,
             url: true,
             note: true,
-            icon: true,
             tags: { select: { id: true, name: true, color: true, icon: true } },
           },
         },

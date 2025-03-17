@@ -86,7 +86,6 @@ export class AnalysesService {
           select: {
             id: true,
             platform: true,
-            icon: true,
             url: true,
             tags: { select: { id: true, icon: true, name: true, color: true } },
           },
