@@ -114,22 +114,20 @@ export class AccountsService {
       }
     });
 
-    if (body.passphrase) {
-      // If the passphrase has changed, we need to update the account
-      if (await this.shouldUpdateHistory(id, body.passphrase)) {
-        return await this.updateAccountWithNewPassphrase(
-          id,
-          body.passphrase,
-          body,
-        );
-      }
+    if (!body.passphrase) {
+      await this.updateAccountDataWithoutPassphrase(id, body);
+      return;
     }
 
-    // Otherwise, we just update the account
-    await this.prisma.account.update({
-      where: { id },
-      data: this.prepareUpdateAccountData(body),
-    });
+    if (await this.shouldUpdateHistory(id, body.passphrase)) {
+      return await this.updateAccountWithNewPassphrase(
+        id,
+        body.passphrase,
+        body,
+      );
+    }
+
+    await this.updateAccountDataWithoutPassphrase(id, body);
   }
 
   public async getSimilarAccounts(
@@ -279,6 +277,11 @@ export class AccountsService {
                 data: { deletedAt: new Date() },
               },
             },
+            tags: body.addTags
+              ? { connect: body.addTags.map((tag) => ({ id: tag })) }
+              : body.removeTags
+                ? { disconnect: body.removeTags.map((tag) => ({ id: tag })) }
+                : undefined,
           },
         });
         return { updatedAccount, lastHistory };
@@ -309,17 +312,23 @@ export class AccountsService {
     };
   }
 
-  private prepareUpdateAccountData(body: RequestUpdateAccount) {
-    return {
-      platform: body.platform,
-      identity: body.identity,
-      url: body.url,
-      note: body.note,
-      tags: body.addTags
-        ? { connect: body.addTags.map((tag) => ({ id: tag })) }
-        : body.removeTags
-          ? { disconnect: body.removeTags.map((tag) => ({ id: tag })) }
-          : undefined,
-    };
+  private async updateAccountDataWithoutPassphrase(
+    id: string,
+    body: RequestUpdateAccount,
+  ) {
+    return await this.prisma.account.update({
+      where: { id },
+      data: {
+        platform: body.platform,
+        identity: body.identity,
+        url: body.url,
+        note: body.note,
+        tags: body.addTags
+          ? { connect: body.addTags.map((tag) => ({ id: tag })) }
+          : body.removeTags
+            ? { disconnect: body.removeTags.map((tag) => ({ id: tag })) }
+            : undefined,
+      },
+    });
   }
 }
