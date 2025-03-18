@@ -277,11 +277,14 @@ export class AccountsService {
                 data: { deletedAt: new Date() },
               },
             },
-            tags: body.addTags
-              ? { connect: body.addTags.map((tag) => ({ id: tag })) }
-              : body.removeTags
+            tags: {
+              ...(body.addTags
+                ? { connect: body.addTags.map((tag) => ({ id: tag })) }
+                : undefined),
+              ...(body.removeTags
                 ? { disconnect: body.removeTags.map((tag) => ({ id: tag })) }
-                : undefined,
+                : undefined),
+            },
           },
         });
         return { updatedAccount, lastHistory };
@@ -323,11 +326,14 @@ export class AccountsService {
         identity: body.identity,
         url: body.url,
         note: body.note,
-        tags: body.addTags
-          ? { connect: body.addTags.map((tag) => ({ id: tag })) }
-          : body.removeTags
+        tags: {
+          ...(body.addTags
+            ? { connect: body.addTags.map((tag) => ({ id: tag })) }
+            : undefined),
+          ...(body.removeTags
             ? { disconnect: body.removeTags.map((tag) => ({ id: tag })) }
-            : undefined,
+            : undefined),
+        },
       },
     });
   }
