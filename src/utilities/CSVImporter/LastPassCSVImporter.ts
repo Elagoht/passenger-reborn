@@ -19,6 +19,7 @@ class LastPassCSVImporter extends CSVImporter {
       url: row.url,
       passphrase: row.password,
       note: row.extra,
+      tags: null,
     };
   }
 }

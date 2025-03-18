@@ -18,6 +18,7 @@ class OnePasswordCSVImporter extends CSVImporter {
       url: row.website,
       passphrase: row.password,
       note: row.notes,
+      tags: null,
     };
   }
 }

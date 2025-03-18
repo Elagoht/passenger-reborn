@@ -168,6 +168,9 @@ export class TransferService {
       ...request,
       passphrase: this.cryptoService.encrypt(request.passphrase),
       simHash: this.cryptoService.generateSimhash(request.passphrase),
+      tags: request.tags
+        ? { connect: request.tags.map((tag) => ({ id: tag })) }
+        : undefined,
     };
   }
 

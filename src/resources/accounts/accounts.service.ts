@@ -88,6 +88,9 @@ export class AccountsService {
         url: body.url,
         note: body.note,
         history: { create: { strength: strengthScore } },
+        tags: body.tags
+          ? { connect: body.tags.map((tag) => ({ id: tag })) }
+          : undefined,
       },
       select: { id: true },
     });
@@ -101,12 +104,7 @@ export class AccountsService {
   public async updateAccount(id: string, body: RequestUpdateAccount) {
     const existingAccount = await this.prisma.account.findUniqueOrThrow({
       where: { id },
-      select: {
-        platform: true,
-        identity: true,
-        url: true,
-        note: true,
-      },
+      select: { platform: true, identity: true, url: true, note: true },
     });
 
     // Delete non-updated fields
@@ -116,34 +114,21 @@ export class AccountsService {
       }
     });
 
-    if (!body.passphrase) {
-      await this.prisma.account.update({
-        where: { id },
-        data: {
-          platform: body.platform,
-          identity: body.identity,
-          url: body.url,
-          note: body.note,
-        },
-      });
-      return;
-    }
-
-    // If the passphrase has changed, we need to update the account
-    if (await this.shouldUpdateHistory(id, body.passphrase)) {
-      await this.updateAccountWithNewPassphrase(id, body.passphrase, body);
-      return;
+    if (body.passphrase) {
+      // If the passphrase has changed, we need to update the account
+      if (await this.shouldUpdateHistory(id, body.passphrase)) {
+        return await this.updateAccountWithNewPassphrase(
+          id,
+          body.passphrase,
+          body,
+        );
+      }
     }
 
     // Otherwise, we just update the account
     await this.prisma.account.update({
       where: { id },
-      data: {
-        platform: body.platform,
-        identity: body.identity,
-        url: body.url,
-        note: body.note,
-      },
+      data: this.prepareUpdateAccountData(body),
     });
   }
 
@@ -321,6 +306,20 @@ export class AccountsService {
     return {
       passphrase: this.crypto.decrypt(account.passphrase),
       copiedCount: account.copiedCount,
+    };
+  }
+
+  private prepareUpdateAccountData(body: RequestUpdateAccount) {
+    return {
+      platform: body.platform,
+      identity: body.identity,
+      url: body.url,
+      note: body.note,
+      tags: body.addTags
+        ? { connect: body.addTags.map((tag) => ({ id: tag })) }
+        : body.removeTags
+          ? { disconnect: body.removeTags.map((tag) => ({ id: tag })) }
+          : undefined,
     };
   }
 }

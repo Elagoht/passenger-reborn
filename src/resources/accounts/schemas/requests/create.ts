@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { IsUrlWithPort } from 'src/decorators/is-url-with-ports.decorator';
 
 class RequestCreateAccount {
@@ -30,5 +30,15 @@ class RequestCreateAccount {
   @IsString()
   @IsOptional()
   note: string | null;
+
+  @ApiProperty({
+    description: 'Array from tag ids to add to the account',
+    example: ['123e4567-e89b-12d3-a456-426614174000'],
+    nullable: true,
+  })
+  @IsArray()
+  @IsOptional()
+  tags: string[] | null;
 }
+
 export default RequestCreateAccount;
