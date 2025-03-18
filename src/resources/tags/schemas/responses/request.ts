@@ -12,4 +12,7 @@ export class ResponseTag {
 
   @ApiProperty({ type: String, nullable: true })
   color: string | null;
+
+  @ApiProperty({ type: Boolean, nullable: true, example: false })
+  isPanic: boolean;
 }

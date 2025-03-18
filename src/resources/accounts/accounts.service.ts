@@ -41,8 +41,7 @@ export class AccountsService {
       ...account,
       tags: account.tags.map((tag) => ({
         ...tag,
-        isPanic:
-          tag.id === this.memCache.get('conf-panicTagId') ? true : undefined,
+        isPanic: tag.id === this.memCache.get('conf-panicTagId'),
       })),
     }));
   }
@@ -71,8 +70,7 @@ export class AccountsService {
       passphrase: this.crypto.decrypt(account.passphrase),
       tags: account.tags.map((tag) => ({
         ...tag,
-        isPanic:
-          tag.id === this.memCache.get('conf-panicTagId') ? true : undefined,
+        isPanic: tag.id === this.memCache.get('conf-panicTagId'),
       })),
     };
   }
@@ -177,8 +175,7 @@ export class AccountsService {
       ...account,
       tags: account.tags.map((tag) => ({
         ...tag,
-        isPanic:
-          tag.id === this.memCache.get('conf-panicTagId') ? true : undefined,
+        isPanic: tag.id === this.memCache.get('conf-panicTagId'),
       })),
     }));
   }
