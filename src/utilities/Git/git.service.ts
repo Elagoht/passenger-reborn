@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { exec } from 'child_process';
 import { readdir, rm, stat } from 'fs/promises';
 import { join } from 'path';
@@ -17,6 +17,8 @@ export class GitService {
     onFail?: () => void,
   ) {
     const fullPath = join(cwd(), 'data', path);
+
+    this.checkIfURLIsSafe(url);
 
     // Create an entry for this clone operation
     this.activeClones.set(path, {});
@@ -135,6 +137,20 @@ export class GitService {
       });
     } catch {
       return false;
+    }
+  }
+
+  /**
+   * Checks if a URL is safe to clone
+   * URL may contain a chain of execution, so we need to check all of them
+   * @param url URL to check
+   * @returns True if the URL is safe
+   */
+  private checkIfURLIsSafe(url: string) {
+    try {
+      return new URL(url);
+    } catch {
+      throw new BadRequestException('Invalid URL');
     }
   }
 }
