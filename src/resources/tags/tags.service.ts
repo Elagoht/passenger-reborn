@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Tag } from '@prisma/client';
 import { ResponseId } from 'src/utilities/Common/schemas/id';
-import { MemCacheService } from 'src/utilities/MemCache/memcache.service';
 import { PrismaService } from 'src/utilities/Prisma/prisma.service';
 import RequestCreateTag from './schemas/request/create';
 import { RequestUpdateTag } from './schemas/request/update';
@@ -9,10 +8,7 @@ import { ResponseTag } from './schemas/responses/request';
 
 @Injectable()
 export class TagsService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly memCache: MemCacheService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async createTag(data: RequestCreateTag): Promise<ResponseId> {
     const tag = await this.prisma.tag.create({ data });
@@ -20,22 +16,13 @@ export class TagsService {
   }
 
   public async getTags(): Promise<ResponseTag[]> {
-    const tags = await this.prisma.tag.findMany();
-    return tags.map((tag) => {
-      return {
-        ...this.getPublicFields(tag),
-        isPanic: tag.id === this.memCache.get('conf-panicTagId'),
-      };
-    });
+    return this.prisma.tag.findMany();
   }
 
   public async getTag(id: string): Promise<ResponseTag> {
-    return {
-      ...this.getPublicFields(
-        await this.prisma.tag.findUniqueOrThrow({ where: { id } }),
-      ),
-      isPanic: id === this.memCache.get('conf-panicTagId'),
-    };
+    return this.getPublicFields(
+      await this.prisma.tag.findUniqueOrThrow({ where: { id } }),
+    );
   }
 
   public async updateTag(id: string, data: RequestUpdateTag): Promise<void> {

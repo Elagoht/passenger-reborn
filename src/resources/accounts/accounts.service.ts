@@ -31,19 +31,11 @@ export class AccountsService {
   ): Promise<ResponseAccountCardItem[]> {
     const pagination = new Pagination(paginationParams);
 
-    const accounts = await this.prisma.account.findMany({
+    return this.prisma.account.findMany({
       ...pagination.getQuery(),
       ...pagination.sortOldestAdded(),
       select: this.selectStandardFields(),
     });
-
-    return accounts.map((account) => ({
-      ...account,
-      tags: account.tags.map((tag) => ({
-        ...tag,
-        isPanic: tag.id === this.memCache.get('conf-panicTagId'),
-      })),
-    }));
   }
 
   public async getAccountById(id: string): Promise<ResponseAccount> {
@@ -68,10 +60,6 @@ export class AccountsService {
     return {
       ...account,
       passphrase: this.crypto.decrypt(account.passphrase),
-      tags: account.tags.map((tag) => ({
-        ...tag,
-        isPanic: tag.id === this.memCache.get('conf-panicTagId'),
-      })),
     };
   }
 
@@ -144,7 +132,7 @@ export class AccountsService {
       select: { simHash: true, ...this.selectStandardFields() },
     });
 
-    const similarAccounts = allAccounts
+    return allAccounts
       .map((entry) => ({
         distance: this.crypto.calculateSimhashDistance(
           targetPassphrase.simHash,
@@ -153,14 +141,6 @@ export class AccountsService {
         ...entry,
       }))
       .filter((entry) => entry.distance <= threshold);
-
-    return similarAccounts.map((account) => ({
-      ...account,
-      tags: account.tags.map((tag) => ({
-        ...tag,
-        isPanic: tag.id === this.memCache.get('conf-panicTagId'),
-      })),
-    }));
   }
 
   public async deleteAccount(id: string): Promise<void> {

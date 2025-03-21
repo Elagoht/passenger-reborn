@@ -43,7 +43,7 @@ export class CollectionsService {
   }
 
   public async getCollection(id: string): Promise<ResponseCollection> {
-    const collection = await this.prisma.collection.findUniqueOrThrow({
+    return this.prisma.collection.findUniqueOrThrow({
       where: { id },
       select: {
         id: true,
@@ -63,18 +63,6 @@ export class CollectionsService {
         },
       },
     });
-
-    return {
-      ...collection,
-      accounts: collection.accounts.map((account) => ({
-        ...account,
-        tags: account.tags.map((tag) => ({
-          ...tag,
-          isPanic:
-            tag.id === this.memCache.get('conf-panicTagId') ? true : undefined,
-        })),
-      })),
-    };
   }
 
   public async updateCollection(

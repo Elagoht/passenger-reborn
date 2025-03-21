@@ -1,4 +1,4 @@
-type DeterminatedConfiguration = 'panicTagId' | 'strictMode';
+type DeterminatedConfiguration = 'strictMode' | 'wordlist';
 
 type DeterminatedConfiguration = {
   [key in DeterminatedConfiguration]: string;
