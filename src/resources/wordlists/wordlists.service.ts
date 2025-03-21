@@ -230,6 +230,20 @@ export class WordListsService {
   }
 
   private async deleteDownloadedRepository(slug: string) {
+    const wordList = await this.prisma.wordlist.findUniqueOrThrow({
+      where: { slug },
+      select: { id: true, status: true },
+    });
+
+    if (wordList.status === WordlistStatus.DOWNLOADING) {
+      await this.git.cancelClone(join('wordlists', slug));
+      await this.updateStatus(
+        wordList.id,
+        WordlistStatus.FAILED,
+        'Download canceled',
+      );
+    }
+
     await this.git.deleteRepository(join('wordlists', slug));
   }
 
