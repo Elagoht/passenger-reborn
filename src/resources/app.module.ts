@@ -6,7 +6,6 @@ import { PrismaModule } from 'src/utilities/Prisma/prisma.module';
 import { AccountsModule } from './accounts/accounts.module';
 import { AnalysesModule } from './analyses/analyses.module';
 import { AuthModule } from './auth/auth.module';
-import { CollectionsModule } from './collections/collections.module';
 import { GenerateModule } from './generate/generate.module';
 import { LeaksModule } from './leaks/leaks.module';
 import { PreferencesModule } from './preferences/preferences.module';
@@ -20,7 +19,6 @@ import { WordListsModule } from './wordlists/wordlists.module';
     AccountsModule,
     AnalysesModule,
     AuthModule,
-    CollectionsModule,
     CryptoModule,
     GenerateModule,
     GraphCacheModule,

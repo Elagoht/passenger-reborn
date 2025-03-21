@@ -106,7 +106,7 @@ Traditional passwords (single words with some numbers or special characters) are
 - Prisma ORM for type-safe database access
 - Advanced cryptographic functions for secure passphrase storage
 - Support for importing custom wordlists for security analysis
-- Collection and tag management for organizing credentials
+- Tag management for organizing credentials
 - Comprehensive statistics and security reporting
 
 ## Contributing

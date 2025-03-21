@@ -35,10 +35,9 @@ model Account {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tags        Tag[]               @relation("AccountToTag")
-  collections Collection[]
-  history     PassphraseHistory[] @relation("PassphraseHistory")
-  analyses    Analysis[]          @relation("AnalysisToAccount")
+  tags     Tag[]               @relation("AccountToTag")
+  history  PassphraseHistory[] @relation("PassphraseHistory")
+  analyses Analysis[]          @relation("AnalysisToAccount")
 
   @@unique([url, platform, identity])
   @@index([platform])
@@ -55,20 +54,6 @@ model PassphraseHistory {
 
   accountId String?
   account   Account? @relation("PassphraseHistory", fields: [accountId], references: [id], onDelete: SetNull)
-}
-
-model Collection {
-  id String @id @default(uuid())
-
-  name        String  @unique
-  description String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  accounts Account[]
-
-  @@index([name])
 }
 
 model Tag {
