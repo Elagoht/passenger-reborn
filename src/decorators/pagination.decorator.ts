@@ -6,7 +6,7 @@ export const DEFAULT_TAKE = 12; // Divisible by 1, 2, 3, 4, 6, 12
 export const MAX_TAKE = 120;
 
 export const Pagination = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext): PaginationParams => {
+  (_: unknown, ctx: ExecutionContext): PaginationParams => {
     const request: Request = ctx.switchToHttp().getRequest();
 
     // Extract page and take from query parameters

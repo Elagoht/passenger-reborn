@@ -122,4 +122,24 @@ export class LeakFilterDto {
   @IsEnum(SortOrder)
   @IsOptional()
   sortOrder?: SortOrder = SortOrder.ASC;
+
+  @ApiProperty({
+    required: false,
+    description: 'Page number',
+  })
+  @IsNumber()
+  @Min(1)
+  @Type(() => Number)
+  @IsOptional()
+  page?: number;
+
+  @ApiProperty({
+    required: false,
+    description: 'Page size',
+  })
+  @IsNumber()
+  @Min(1)
+  @Type(() => Number)
+  @IsOptional()
+  take?: number;
 }
