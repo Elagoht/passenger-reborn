@@ -25,7 +25,7 @@ export class LeaksService implements OnModuleInit {
     paginationParams: PaginationParams,
   ): Promise<ResponseLeakResults> {
     const leaks = await this.findLeaks(filterDto, paginationParams);
-    return this.prepareResponse(leaks, paginationParams);
+    return this.prepareResponse(leaks.data, leaks.total, paginationParams);
   }
 
   public async getLeakById(id: string): Promise<ResponseLeak> {
@@ -50,15 +50,17 @@ export class LeaksService implements OnModuleInit {
   private async findLeaks(
     filterDto: LeakFilterDto,
     paginationParams: PaginationParams,
-  ): Promise<HIBPLeakListItem[]> {
+  ): Promise<HIBPLeaksDBPrepared> {
     const leaksDB = await this.getAllLeaks();
 
     // Use the LeaksFilter utility to filter, sort, and paginate
     const leaksFilter = new LeaksFilter(leaksDB);
-    return leaksFilter
-      .filter(filterDto)
-      .sort(filterDto)
-      .paginate(paginationParams);
+    const filteredLeaks = leaksFilter.filter(filterDto).sort(filterDto);
+
+    return {
+      data: filteredLeaks.paginate(paginationParams),
+      total: filteredLeaks.getTotal(),
+    };
   }
 
   private async getAllLeaks(): Promise<HIBPLeaksDB> {
@@ -108,12 +110,13 @@ export class LeaksService implements OnModuleInit {
 
   private prepareResponse(
     leaks: HIBPLeakListItem[],
+    total: number,
     paginationParams: PaginationParams,
   ): ResponseLeakResults {
     return {
       page: paginationParams.page,
       take: paginationParams.take,
-      total: leaks.length,
+      total,
       data: leaks.map((leak) => ({
         id: leak.id,
         name: leak.name,

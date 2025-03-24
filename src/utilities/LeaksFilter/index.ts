@@ -120,6 +120,10 @@ export class LeaksFilter {
     return this.filteredLeaks.slice(startIndex, endIndex);
   }
 
+  public getTotal(): number {
+    return this.filteredLeaks.length;
+  }
+
   private fuzzyMatch(text: string, searchTerm: string): boolean {
     if (!searchTerm) return true;
 

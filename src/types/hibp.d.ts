@@ -32,3 +32,8 @@ type HIBPLeakRaw = {
 };
 
 type HIBPLeaksDB = Map<string, HIBPLeakListItem>;
+
+type HIBPLeaksDBPrepared = {
+  data: HIBPLeakListItem[];
+  total: number;
+};
