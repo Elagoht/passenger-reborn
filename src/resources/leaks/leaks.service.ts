@@ -113,7 +113,7 @@ export class LeaksService implements OnModuleInit {
     return {
       page: paginationParams.page,
       take: paginationParams.take,
-      total: this.leaksDB.size,
+      total: leaks.length,
       data: leaks.map((leak) => ({
         id: leak.id,
         name: leak.name,
