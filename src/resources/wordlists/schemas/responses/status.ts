@@ -8,6 +8,6 @@ export class ResponseWordListStatus {
   })
   status: WordlistStatus;
 
-  @ApiProperty({ description: 'The message of the word list' })
-  message: string;
+  @ApiProperty({ description: 'The message of the word list', nullable: true })
+  message: string | null;
 }

@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   UseGuards,
@@ -16,6 +18,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtGuard } from 'src/guards/jwt.guard';
 import { RequestImportWordList } from './schemas/requests/import';
+import { ResponseWordListStatus } from './schemas/responses/status';
 import {
   ResponseWordList,
   ResponseWordListCard,
@@ -54,6 +57,10 @@ export class WordListsController {
   }
 
   @Get(':id/status')
+  @ApiResponse({
+    description: 'The status of the word list',
+    type: ResponseWordListStatus,
+  })
   @ApiOperation({ summary: 'Get the status of a word list' })
   async getWordListStatus(@Param('id') id: string) {
     return this.wordListsService.getWordListStatus(id);
@@ -73,6 +80,8 @@ export class WordListsController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a word list by ID' })
+  @ApiResponse({ status: 204, description: 'The word list was deleted' })
+  @HttpCode(HttpStatus.NO_CONTENT)
   async deleteWordList(@Param('id') id: string) {
     return this.wordListsService.deleteWordList(id);
   }
