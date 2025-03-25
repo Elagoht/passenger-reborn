@@ -125,6 +125,7 @@ export class LeaksService implements OnModuleInit {
         date: leak.date,
         pwnCount: leak.pwnCount,
         verified: leak.verified,
+        logo: leak.logo,
       })),
     };
   }
