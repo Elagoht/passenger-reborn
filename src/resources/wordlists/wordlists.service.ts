@@ -147,7 +147,18 @@ export class WordListsService {
       );
     }
 
-    await this.git.deleteRepository(join('wordlists', wordList.slug));
+    void this.git
+      .deleteRepository(join('wordlists', wordList.slug))
+      .then(async () => {
+        await this.prisma.wordlist.delete({ where: { id: wordList.id } });
+      })
+      .catch(async () => {
+        await this.updateStatus(
+          wordList.id,
+          WordlistStatus.FAILED,
+          'Failed to delete',
+        );
+      });
   }
 
   public async importWordList(url: string) {
