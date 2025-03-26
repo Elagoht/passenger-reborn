@@ -135,11 +135,19 @@ export class WordListsService {
   public async deleteWordList(id: string) {
     const wordList = await this.prisma.wordlist.findUniqueOrThrow({
       where: { id },
-      select: { slug: true },
+      select: { id: true, status: true, slug: true },
     });
 
-    await this.prisma.wordlist.delete({ where: { id } });
-    void this.deleteDownloadedRepository(wordList.slug);
+    if (wordList.status === WordlistStatus.DOWNLOADING) {
+      await this.git.cancelClone(join('wordlists', wordList.slug));
+      await this.updateStatus(
+        wordList.id,
+        WordlistStatus.FAILED,
+        'Download canceled',
+      );
+    }
+
+    await this.git.deleteRepository(join('wordlists', wordList.slug));
   }
 
   public async importWordList(url: string) {
@@ -227,24 +235,6 @@ export class WordListsService {
         void this.updateStatus(id, WordlistStatus.FAILED, 'Failed downloading');
       },
     );
-  }
-
-  private async deleteDownloadedRepository(slug: string) {
-    const wordList = await this.prisma.wordlist.findUniqueOrThrow({
-      where: { slug },
-      select: { id: true, status: true },
-    });
-
-    if (wordList.status === WordlistStatus.DOWNLOADING) {
-      await this.git.cancelClone(join('wordlists', slug));
-      await this.updateStatus(
-        wordList.id,
-        WordlistStatus.FAILED,
-        'Download canceled',
-      );
-    }
-
-    await this.git.deleteRepository(join('wordlists', slug));
   }
 
   private METADATA_FIELDS: Array<keyof WordListMetadata> = [
