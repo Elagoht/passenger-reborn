@@ -41,6 +41,10 @@ import { CryptoService } from 'src/utilities/Crypto/crypto.service';
 import Pagination from 'src/utilities/Pagination';
 import { PrismaService } from 'src/utilities/Prisma/prisma.service';
 import { ResponseWordListCard } from '../wordlists/schemas/responses/wordlists';
+import {
+  ResponseAnalysisReportDetails,
+  ResponseAnalysisReportListItem,
+} from './schemas/responses/analysesReport';
 
 @Injectable()
 export class AnalysesService {
@@ -74,14 +78,39 @@ export class AnalysesService {
     });
   }
 
-  public async getAnalysisReports(pagination: PaginationParams) {
-    return this.prisma.analysis.findMany(new Pagination(pagination).getQuery());
+  public async getAnalysisReports(
+    pagination: PaginationParams,
+  ): Promise<ResponseAnalysisReportListItem[]> {
+    const analyses = await this.prisma.analysis.findMany({
+      ...new Pagination(pagination).getQuery(),
+      include: {
+        wordlists: {
+          select: {
+            id: true,
+            displayName: true,
+          },
+        },
+      },
+    });
+
+    return analyses.map((analysis) => ({
+      ...analysis,
+      wordList: analysis.wordlists[0],
+    }));
   }
 
-  public async getAnalysisReport(id: string) {
-    return this.prisma.analysis.findUniqueOrThrow({
+  public async getAnalysisReport(
+    id: string,
+  ): Promise<ResponseAnalysisReportDetails> {
+    const analysis = await this.prisma.analysis.findUniqueOrThrow({
       where: { id },
       include: {
+        wordlists: {
+          select: {
+            id: true,
+            displayName: true,
+          },
+        },
         accounts: {
           select: {
             id: true,
@@ -92,6 +121,15 @@ export class AnalysesService {
         },
       },
     });
+
+    return {
+      ...analysis,
+      wordList: analysis.wordlists[0],
+      matchedAccounts: analysis.accounts.map((account) => ({
+        ...account,
+        identity: account.id,
+      })),
+    };
   }
 
   public getAnalysisLogs(id: string): string[] {

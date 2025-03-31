@@ -20,6 +20,10 @@ import { JwtGuard } from 'src/guards/jwt.guard';
 import { ResponseId } from 'src/utilities/Common/schemas/id';
 import { ResponseWordListCard } from '../wordlists/schemas/responses/wordlists';
 import { AnalysesService } from './analyses.service';
+import {
+  ResponseAnalysisReportDetails,
+  ResponseAnalysisReportListItem,
+} from './schemas/responses/analysesReport';
 
 /**
  * Manage and monitor analysis process.
@@ -70,11 +74,13 @@ export class AnalysesController {
 
   @Get('reports')
   @ApiPaginationQuery()
+  @ApiResponse({ type: [ResponseAnalysisReportListItem] })
   public async getAnalysisReports(@Pagination() pagination: PaginationParams) {
     return this.analysesService.getAnalysisReports(pagination);
   }
 
   @Get('reports/:id')
+  @ApiResponse({ type: ResponseAnalysisReportDetails })
   public async getAnalysisReport(@Param('id') id: string) {
     return this.analysesService.getAnalysisReport(id);
   }
