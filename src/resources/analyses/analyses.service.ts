@@ -123,7 +123,14 @@ export class AnalysesService {
     });
 
     return {
-      ...analysis,
+      id: analysis.id,
+      status: analysis.status,
+      message: analysis.message,
+      totalMatched: analysis.totalMatched,
+      totalChecked: analysis.totalChecked,
+      tookMiliseconds: analysis.tookMiliseconds,
+      createdAt: analysis.createdAt,
+      updatedAt: analysis.updatedAt,
       wordList: analysis.wordlists[0],
       matchedAccounts: analysis.accounts.map((account) => ({
         ...account,
