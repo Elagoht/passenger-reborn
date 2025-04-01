@@ -2,6 +2,14 @@ import { ApiProperty } from '@nestjs/swagger';
 import { AnalysisStatus } from '@prisma/client';
 import { ResponseAccountCardItem } from 'src/resources/accounts/schemas/responses/accounts';
 
+class AnalysisReportWordList {
+  @ApiProperty({ description: 'The ID of the word list' })
+  id: string;
+
+  @ApiProperty({ description: 'The display name of the word list' })
+  displayName: string;
+}
+
 export class ResponseAnalysisReportListItem {
   @ApiProperty({ description: 'The ID of the analysis report' })
   id: string;
@@ -35,14 +43,6 @@ export class ResponseAnalysisReportListItem {
 
   @ApiProperty({ description: 'The word list of the analysis report' })
   wordList: AnalysisReportWordList;
-}
-
-class AnalysisReportWordList {
-  @ApiProperty({ description: 'The ID of the word list' })
-  id: string;
-
-  @ApiProperty({ description: 'The display name of the word list' })
-  displayName: string;
 }
 
 export class ResponseAnalysisReportDetails extends ResponseAnalysisReportListItem {
