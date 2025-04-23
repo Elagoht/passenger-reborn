@@ -8,21 +8,22 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiPaginationQuery } from 'src/decorators/pagination-query.decorator';
-import { Pagination } from 'src/decorators/pagination.decorator';
 import { JwtGuard } from 'src/guards/jwt.guard';
 import { ResponseId } from 'src/utilities/Common/schemas/id';
 import { AccountsService } from './accounts.service';
 import RequestCreateAccount from './schemas/requests/create';
+import RequestFilterAccounts from './schemas/requests/filter';
 import RequestUpdateAccount from './schemas/requests/update';
 import {
   ResponseAccount,
@@ -39,11 +40,11 @@ export class AccountsController {
   public constructor(private readonly accountsService: AccountsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all accounts' })
-  @ApiPaginationQuery()
+  @ApiOperation({ summary: 'Get all accounts with filters' })
+  @ApiQuery({ type: RequestFilterAccounts })
   @ApiResponse({ type: [ResponseAccountCardItem] })
-  public async getAccounts(@Pagination() pagination: PaginationParams) {
-    return this.accountsService.getAccounts(pagination);
+  public async getAccounts(@Query() filters: RequestFilterAccounts) {
+    return this.accountsService.getAccounts(filters);
   }
 
   @Get(':id')

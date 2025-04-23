@@ -3,7 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 const validationPipe = new ValidationPipe({
   whitelist: true,
   transform: true,
-  forbidNonWhitelisted: true,
+  forbidNonWhitelisted: false,
   transformOptions: {
     enableImplicitConversion: true,
   },

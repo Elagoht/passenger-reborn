@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import { AccountFilter } from 'src/utilities/AccountFilter';
 import { ResponseId } from 'src/utilities/Common/schemas/id';
 import { CryptoService } from 'src/utilities/Crypto/crypto.service';
 import { GraphCacheService } from 'src/utilities/GraphCache/graph-cache.service';
-import { MemCacheService } from 'src/utilities/MemCache/memcache.service';
-import Pagination from 'src/utilities/Pagination';
 import { PrismaService } from 'src/utilities/Prisma/prisma.service';
 import { Strength } from 'src/utilities/Strength';
 import RequestCreateAccount from './schemas/requests/create';
+import RequestFilterAccounts from './schemas/requests/filter';
 import RequestUpdateAccount from './schemas/requests/update';
 import {
   ResponseAccount,
@@ -23,17 +23,13 @@ export class AccountsService {
     private readonly prisma: PrismaService,
     private readonly crypto: CryptoService,
     private readonly graphCache: GraphCacheService,
-    private readonly memCache: MemCacheService,
   ) {}
 
   public async getAccounts(
-    paginationParams: PaginationParams,
+    filters?: RequestFilterAccounts,
   ): Promise<ResponseAccountCardItem[]> {
-    const pagination = new Pagination(paginationParams);
-
     return this.prisma.account.findMany({
-      ...pagination.getQuery(),
-      ...pagination.sortOldestAdded(),
+      where: AccountFilter.sanitizeFilters(filters),
       select: this.selectStandardFields(),
     });
   }
