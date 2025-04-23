@@ -153,17 +153,20 @@ export class AccountsService {
 
     await this.prisma.account.delete({ where: { id } });
 
-    // Soft delete the last history record
-    await this.prisma.passphraseHistory.update({
-      where: { id: account.history[0].id },
-      data: { deletedAt: new Date() },
-    });
+    // Only update history if it exists
+    if (account.history && account.history.length > 0) {
+      // Soft delete the last history record
+      await this.prisma.passphraseHistory.update({
+        where: { id: account.history[0].id },
+        data: { deletedAt: new Date() },
+      });
 
-    // Mark the record as deleted and disable for future updates
-    await this.graphCache.onRecordDeleted(
-      account.history[0].strength,
-      new Date(),
-    );
+      // Mark the record as deleted and disable for future updates
+      await this.graphCache.onRecordDeleted(
+        account.history[0].strength,
+        new Date(),
+      );
+    }
   }
 
   public async addTagToAccount(accountId: string, tagId: string) {

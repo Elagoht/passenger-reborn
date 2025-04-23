@@ -21,6 +21,7 @@ import FirefoxCSVImporter from 'src/utilities/CSVImporter/FirefoxCSVImporter';
 import LastPassCSVImporter from 'src/utilities/CSVImporter/LastPassCSVImporter';
 import { PrismaService } from 'src/utilities/Prisma/prisma.service';
 import { promisify } from 'util';
+import { AccountsService } from '../accounts/accounts.service';
 import RequestCreateAccount from '../accounts/schemas/requests/create';
 import { ExportFormat } from './schemas/requests/export';
 import { ImportConflictHandling } from './schemas/requests/import';
@@ -44,6 +45,7 @@ export class TransferService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cryptoService: CryptoService,
+    private readonly accountsService: AccountsService,
   ) {}
 
   public async import(
@@ -88,7 +90,7 @@ export class TransferService {
       case ImportConflictHandling.THROW:
         for (const [index, request] of requests.entries()) {
           try {
-            await this.createAccount(request);
+            await this.accountsService.createAccount(request);
             logs.push(this.formatLogMessage(request, index + 1, 'success'));
           } catch (error) {
             if (this.isUniqueConstraintError(error)) {
@@ -109,7 +111,7 @@ export class TransferService {
             await this.updateExistingAccount(existingAccount.id, request);
             logs.push(this.formatLogMessage(request, index + 1, 'update'));
           } else {
-            await this.createAccount(request);
+            await this.accountsService.createAccount(request);
             logs.push(this.formatLogMessage(request, index + 1, 'success'));
           }
         }
@@ -121,20 +123,12 @@ export class TransferService {
           if (existingAccount) {
             logs.push(this.formatLogMessage(request, index + 1, 'skip'));
           } else {
-            await this.createAccount(request);
+            await this.accountsService.createAccount(request);
             logs.push(this.formatLogMessage(request, index + 1, 'success'));
           }
         }
         return { message: 'Import completed', details: logs.join('\n') };
     }
-  }
-
-  private async createAccount(request: RequestCreateAccount): Promise<void> {
-    await this.prisma.$transaction(async (prisma) => {
-      await prisma.account.create({
-        data: this.prepareQueries(request),
-      });
-    });
   }
 
   private async findExistingAccount(request: RequestCreateAccount) {
