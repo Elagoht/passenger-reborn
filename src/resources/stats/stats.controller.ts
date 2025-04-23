@@ -29,4 +29,11 @@ export class StatsController {
   async getAverageStrength(@Param('accountId') accountId: string) {
     return this.statsService.getAverageStrengthOfAccount(accountId);
   }
+
+  @Get('count')
+  @ApiOperation({ summary: 'Get the total number of passphrases' })
+  @ApiResponse({ type: Number })
+  async getCount() {
+    return this.statsService.getCount();
+  }
 }

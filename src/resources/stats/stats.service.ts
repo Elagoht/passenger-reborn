@@ -36,4 +36,8 @@ export class StatsService {
 
     return this.graphCache.updateStrengthCache();
   }
+
+  public async getCount() {
+    return this.prisma.account.count();
+  }
 }
